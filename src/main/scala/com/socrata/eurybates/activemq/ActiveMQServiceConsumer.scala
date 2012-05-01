@@ -8,13 +8,12 @@ import java.util.concurrent.ExecutionException
 
 import scala.util.control.{Exception => ExceptionUtil}
 
-import com.socrata.util.error
 import com.rojoma.json.util.JsonUtil._
 import javax.jms.{JMSException, Connection, Session, TextMessage}
 import util.logging.LazyStringLogger
 import com.rojoma.json.io.JsonReaderException
 
-class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service]) extends ActiveMQCommon(sourceId) {
+class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
   val log = new LazyStringLogger(getClass)
   
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }

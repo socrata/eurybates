@@ -9,7 +9,7 @@ import javax.jms.{Connection, Queue, MessageProducer, DeliveryMode, Session}
 
 // technically, a Session is supposed to be used by only a single thread.  Fortunately, activemq
 // is more lenient than strict JMS.
-class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean) extends ActiveMQCommon(sourceId) with Producer {
+class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean) extends MessageCodec(sourceId) with Producer {
   val log = new LazyStringLogger(getClass)
 
   var session: Session = _
