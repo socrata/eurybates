@@ -6,7 +6,7 @@ name := "eurybates"
 
 scalaVersion := "2.9.2"
 
-crossScalaVersions := Seq("2.8.1", "2.9.2")
+crossScalaVersions := Seq("2.9.2")
 
 libraryDependencies <++= (slf4jVersion) { slf4jVersion =>
   Seq(
