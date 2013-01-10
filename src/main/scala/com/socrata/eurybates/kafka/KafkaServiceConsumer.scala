@@ -4,6 +4,7 @@ package com.socrata.eurybates.kafka
 
 import scala.util.control.{Exception => ExceptionUtil}
 import kafka.message.{Message => KafkaMessage}
+import kafka.message.{MessageAndMetadata => KafkaMessageAndMetadata }
 import java.util.concurrent.ExecutorService
 import java.util.Properties
 import _root_.kafka.utils.Utils
@@ -33,7 +34,8 @@ class KafkaServiceConsumer(zookeeperServers: String, sourceId: String, executor:
         for(stream <- streams) {
           executor.execute(new Runnable() {
             def run() {
-              for(message:KafkaMessage <- stream) {
+              for(messageMetadata:KafkaMessageAndMetadata[KafkaMessage] <- stream) {
+                val message = messageMetadata.message
                 val textMessage = Utils.toString(message.payload, "UTF-8")
                 ExceptionUtil.catching(classOf[JsonReaderException]).either(parseJson[Message](textMessage)) match {
                   case Right(Some(msg:Message)) =>
