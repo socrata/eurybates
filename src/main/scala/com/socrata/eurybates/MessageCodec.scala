@@ -1,8 +1,8 @@
 package com.socrata.eurybates
 
-import com.rojoma.json.ast.JValue
-import com.rojoma.json.codec.JsonCodec
-import com.rojoma.json.matcher._
+import com.rojoma.json.v3.ast.JValue
+import com.rojoma.json.v3.matcher.{PObject, Variable}
+import com.rojoma.json.v3.codec.{DecodeError, JsonDecode, JsonEncode}
 
 class MessageCodec(sourceId:String) {
   private val tagVar = Variable[Tag]
@@ -16,7 +16,7 @@ class MessageCodec(sourceId:String) {
     "uuid" -> uuidVar
   )
 
-  implicit object MessageCodec extends JsonCodec[Message] {
+  implicit object jCodec extends JsonEncode[Message] with JsonDecode[Message] {
     def encode(msg: Message): JValue =
       WireMessagePat.generate(
         tagVar := msg.tag,
@@ -24,8 +24,10 @@ class MessageCodec(sourceId:String) {
         sourceIdVar := sourceId,
         uuidVar := java.util.UUID.randomUUID().toString)
 
-    def decode(x: JValue): Option[Message] = WireMessagePat.matches(x) map { results =>
-      Message(tagVar(results), detailsVar(results))
-    }
+    def decode(x: JValue): Either[DecodeError, Message] =
+      WireMessagePat.matches(x).right.map { results =>
+        Message(tagVar(results), detailsVar(results))
+      }
+
   }
 }

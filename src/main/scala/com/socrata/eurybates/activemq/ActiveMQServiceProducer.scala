@@ -2,10 +2,10 @@ package com.socrata
 package eurybates
 package activemq
 
-import com.rojoma.json.util.JsonUtil._
 import java.lang.IllegalStateException
 import util.logging.LazyStringLogger
 import javax.jms.{Connection, Queue, MessageProducer, DeliveryMode, Session}
+import com.rojoma.json.v3.util.JsonUtil
 
 // technically, a Session is supposed to be used by only a single thread.  Fortunately, activemq
 // is more lenient than strict JMS.
@@ -53,7 +53,7 @@ class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePr
 
   def apply(message: Message) {
     log.trace("Sending " + message)
-    val encodedMessage = renderJson(message, pretty = encodePrettily)
+    val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
     val qMessage = session.createTextMessage(encodedMessage)
     val target = queue
     if(target != null) producer.send(target, qMessage)

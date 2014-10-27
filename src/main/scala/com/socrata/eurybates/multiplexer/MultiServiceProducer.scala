@@ -1,6 +1,6 @@
 package com.socrata.eurybates.multiplexer
 
-import com.socrata.eurybates.{Message, MessageCodec, Producer,Consumer}
+import com.socrata.eurybates.{Message, MessageCodec, Producer}
 
 /** A producer that sends to multiple sub-producers
  *

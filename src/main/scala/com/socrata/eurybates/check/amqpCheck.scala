@@ -3,7 +3,7 @@ package com.socrata.eurybates.check
 import com.socrata.eurybates.activemq.{ActiveMQServiceProducer, ActiveMQServiceConsumer}
 import com.socrata.zookeeper.ZooKeeperProvider
 import com.socrata.eurybates.zookeeper.ServiceConfiguration
-import com.rojoma.json.ast._
+import com.rojoma.json.v3.ast.JNull
 import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
 
@@ -31,7 +31,7 @@ object amqpCheck {
 
     val producer = new ActiveMQServiceProducer(conn, "hello!", true)
     producer.start()
-    
+
     val config = new ServiceConfiguration(zkp, executor, producer.setServiceNames)
     config.start().foreach(config.destroyService)
     // producer.setServiceNames(config.start())

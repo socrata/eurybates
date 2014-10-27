@@ -8,14 +8,17 @@ import java.util.concurrent.ExecutionException
 
 import scala.util.control.{Exception => ExceptionUtil}
 
-import com.rojoma.json.util.JsonUtil._
 import javax.jms.{JMSException, Connection, Session, TextMessage}
 import util.logging.LazyStringLogger
-import com.rojoma.json.io.JsonReaderException
+import com.rojoma.json.v3.io.JsonReaderException
+import com.rojoma.json.v3.util.JsonUtil
+import com.rojoma.json.v3.codec.DecodeError.InvalidValue
+import com.rojoma.json.v3.ast.JString
+import com.rojoma.json.v3.codec.Path
 
 class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
   val log = new LazyStringLogger(getClass)
-  
+
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
 
   def start() = synchronized {
@@ -49,7 +52,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
             sleepTime = sleepMax.max(sleepTime * 2)
         }
       }
-      error("can't get here")
+      sys.error("can't get here")
     }
     override def run() {
       try {
@@ -66,13 +69,17 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
             def call() {
               qMsg match {
                 case tm: TextMessage =>
-                  ExceptionUtil.catching(classOf[JsonReaderException]).either(parseJson[Message](tm.getText)) match {
-                    case Right(Some(msg)) =>
-                      service.messageReceived(msg)
-                    case Right(None) =>
-                      log.warn("Unable to parse JSON as a Message object: " + tm.getText)
-                    case Left(exn) =>
-                      log.warn("Received a non-JSON text message: " + tm.getText, exn)
+                  val msg = try {
+                    JsonUtil.parseJson[Message](tm.getText)
+                  } catch {
+                    case _: JsonReaderException =>
+                      Left(InvalidValue(JString(tm.getText), Path("details")))
+                  }
+                  msg match {
+                    case Right(m) =>
+                      service.messageReceived(m)
+                    case Left(err) =>
+                      log.warn("Received a non-JSON text message: " + err)
                   }
                 case _ =>
                   log.warn("Received a non-TextMessage from JMS; actual type received is " + qMsg.getClass)
@@ -98,7 +105,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
         case e: InterruptedException => // time to go
       }
     }
-    
+
     def close() = synchronized {
       consumer.close()
       session.close()

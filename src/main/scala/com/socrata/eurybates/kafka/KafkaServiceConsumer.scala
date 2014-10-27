@@ -1,25 +1,28 @@
 package com.socrata
-package eurybates.kafka
-package com.socrata.eurybates.kafka
+package eurybates
+package kafka
 
 import scala.util.control.{Exception => ExceptionUtil}
-import kafka.message.{Message => KafkaMessage}
-import kafka.message.{MessageAndMetadata => KafkaMessageAndMetadata }
 import java.util.concurrent.ExecutorService
 import java.util.Properties
-import _root_.kafka.utils.Utils
-import _root_.com.rojoma.json.io.JsonReaderException
-import _root_.com.rojoma.json.util.JsonUtil._
 import util.logging.LazyStringLogger
-import kafka.consumer.{Consumer, ConsumerConfig, ConsumerConnector}
+import _root_.kafka.consumer.{Consumer, ConsumerConfig, ConsumerConnector}
+import _root_.kafka.message.{Message => KafkaMessage}
+import _root_.kafka.message.{MessageAndMetadata => KafkaMessageAndMetadata }
 import eurybates.{MessageCodec, ServiceName, Service, Message}
+
+import com.rojoma.json.v3.io.JsonReaderException
+import com.rojoma.json.v3.util.JsonUtil
+import com.rojoma.json.v3.codec.DecodeError.InvalidValue
+import com.rojoma.json.v3.ast.JString
+import com.rojoma.json.v3.codec.Path
 
 class KafkaServiceConsumer(zookeeperServers: String, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service])
   extends MessageCodec(sourceId)
 {
   val log = new LazyStringLogger(getClass)
   private var consumerConnector : ConsumerConnector = null
-  
+
   def start() = synchronized {
     val props = new Properties
     props.put("zk.connect", zookeeperServers)
@@ -27,23 +30,26 @@ class KafkaServiceConsumer(zookeeperServers: String, sourceId: String, executor:
     val consumerConfig = new ConsumerConfig(props)
     consumerConnector = Consumer.create(consumerConfig)
     val topicMessageStreams = consumerConnector.createMessageStreams(services map { kv => ("eurybates." + kv._1, 1)})
-    
+
     services.map {
       case (serviceName, service) =>
         val streams = topicMessageStreams.apply("eurybates." + serviceName)
         for(stream <- streams) {
           executor.execute(new Runnable() {
             def run() {
-              for(messageMetadata:KafkaMessageAndMetadata[KafkaMessage] <- stream) {
-                val message = messageMetadata.message
-                val textMessage = Utils.toString(message.payload, "UTF-8")
-                ExceptionUtil.catching(classOf[JsonReaderException]).either(parseJson[Message](textMessage)) match {
-                  case Right(Some(msg:Message)) =>
-                    service.messageReceived(msg)
-                  case Right(None) =>
-                    log.warn("Unable to parse JSON as a Message object: " + textMessage)
-                  case Left(exn) =>
-                    log.warn("Received a non-JSON text message: " + textMessage, exn)
+              for(messageMetadata <- stream) {
+                val message = new String(messageMetadata.message, "UTF-8")
+                val msg = try {
+                  JsonUtil.parseJson[Message](message)
+                } catch {
+                  case _: JsonReaderException =>
+                    Left(InvalidValue(JString(message), Path("details")))
+                }
+                msg match {
+                  case Right(m) =>
+                    service.messageReceived(m)
+                  case Left(err) =>
+                    log.warn("Received a non-JSON text message: " + err)
                 }
               }
             }

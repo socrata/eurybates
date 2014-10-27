@@ -1,20 +1,11 @@
-/**
-* Created by IntelliJ IDEA.
-* User: m
-* Date: 3/26/12
-* Time: 8:58 AM
-* To change this template use File | Settings | File Templates.
-*/
-
-
 package com.socrata.eurybates.check
 
 import com.socrata.zookeeper.ZooKeeperProvider
 import com.socrata.eurybates.zookeeper.ServiceConfiguration
-import com.rojoma.json.ast._
+import com.rojoma.json.v3.ast.JNull
 import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
-import kafka.com.socrata.eurybates.kafka.KafkaServiceConsumer
+import com.socrata.eurybates.kafka.KafkaServiceConsumer
 import com.socrata.eurybates.activemq.{ActiveMQServiceProducer, ActiveMQServiceConsumer}
 import com.socrata.eurybates.multiplexer.MultiServiceProducer
 

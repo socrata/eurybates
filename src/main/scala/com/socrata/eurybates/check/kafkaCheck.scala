@@ -1,12 +1,10 @@
 package com.socrata.eurybates.check
 
 import com.socrata.zookeeper.ZooKeeperProvider
-import com.socrata.eurybates.zookeeper.ServiceConfiguration
-import com.rojoma.json.ast._
+import com.rojoma.json.v3.ast.JNull
 import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
-import kafka.com.socrata.eurybates.kafka.KafkaServiceConsumer
-import kafka.KafkaServiceProducer
+import com.socrata.eurybates.kafka.{KafkaServiceConsumer, KafkaServiceProducer}
 
 object kafkaCheck {
   val log = new LazyStringLogger(getClass)

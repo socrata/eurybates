@@ -1,11 +1,11 @@
 package com.socrata
 package eurybates.kafka
 
+import com.rojoma.json.v3.util.JsonUtil
 import util.logging.LazyStringLogger
-import _root_.com.rojoma.json.util.JsonUtil._
 import java.util.Properties
 import eurybates.{MessageCodec, QueueUtil, Producer}
-import kafka.producer.{ProducerData, Producer => KafkaProducer, ProducerConfig}
+import kafka.producer.{Producer => KafkaProducer, KeyedMessage, ProducerConfig}
 
 /** Submit Messages to a Kafka-based queue
  *
@@ -16,7 +16,7 @@ import kafka.producer.{ProducerData, Producer => KafkaProducer, ProducerConfig}
 class KafkaServiceProducer(zookeeperServers: String, sourceId:String, encodePrettily: Boolean) extends MessageCodec(sourceId) with Producer with QueueUtil {
   val log = new LazyStringLogger(getClass)
   var producer:KafkaProducer[String,  String] = null
-  
+
   def start() = synchronized {
     var props = new Properties()
     props.put("zk.connect", zookeeperServers)
@@ -31,9 +31,9 @@ class KafkaServiceProducer(zookeeperServers: String, sourceId:String, encodePret
 
   def apply(message: eurybates.Message) {
     val queueName = "eurybates." + message.tag
-    val encodedMessage = renderJson(message, pretty = encodePrettily)
+    val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
 
     log.info("Sending " + message + " on queue " + queueName)
-    producer.send(new ProducerData[String, String](queueName, encodedMessage))
+    producer.send(new KeyedMessage[String, String](queueName, encodedMessage))
   }
 }
