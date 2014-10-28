@@ -2,13 +2,10 @@ package com.socrata
 package eurybates
 package kafka
 
-import scala.util.control.{Exception => ExceptionUtil}
 import java.util.concurrent.ExecutorService
 import java.util.Properties
 import util.logging.LazyStringLogger
 import _root_.kafka.consumer.{Consumer, ConsumerConfig, ConsumerConnector}
-import _root_.kafka.message.{Message => KafkaMessage}
-import _root_.kafka.message.{MessageAndMetadata => KafkaMessageAndMetadata }
 import eurybates.{MessageCodec, ServiceName, Service, Message}
 
 import com.rojoma.json.v3.io.JsonReaderException

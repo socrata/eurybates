@@ -6,8 +6,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 
-import scala.util.control.{Exception => ExceptionUtil}
-
 import javax.jms.{JMSException, Connection, Session, TextMessage}
 import util.logging.LazyStringLogger
 import com.rojoma.json.v3.io.JsonReaderException
