@@ -10,18 +10,18 @@ import com.socrata.eurybates._
 object amqpCheck {
   val log = new LazyStringLogger(getClass)
 
-  def greetConsumer(label: String) = new Consumer {
+  def greetConsumer(label: String) : Consumer = new Consumer {
     val accepts = Set("hello")
     def consume(message: Message) { println(label + " received " + message) }
   }
 
-  def greetService(label: String) = new SimpleService(List(greetConsumer(label)))
+  def greetService(label: String) : SimpleService = new SimpleService(List(greetConsumer(label)))
 
-  def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable) {
+  def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable) : Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) = {
     val executor = java.util.concurrent.Executors.newCachedThreadPool()
 
     val zkp = new ZooKeeperProvider("mike.local:2181", 20000, executor)
@@ -41,8 +41,8 @@ object amqpCheck {
 
     for(i <- 0 until 100) {
       producer(Message("hello", JNull))
-      if(i == 30) config.createService("first")
-      else if(i == 60) config.createService("second")
+      if(i == 30) config.registerService("first")
+      else if(i == 60) config.registerService("second")
       Thread.sleep(100)
     }
 

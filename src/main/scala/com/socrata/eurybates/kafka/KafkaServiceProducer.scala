@@ -4,25 +4,36 @@ package eurybates.kafka
 import com.rojoma.json.v3.util.JsonUtil
 import util.logging.LazyStringLogger
 import java.util.Properties
-import eurybates.{MessageCodec, QueueUtil, Producer}
-import kafka.producer.{Producer => KafkaProducer, KeyedMessage, ProducerConfig}
+import com.socrata.eurybates._
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, ProducerConfig}
+
+
+object KafkaServiceProducer {
+  def fromProperties(sourceId: String, properties: Properties) : Producer = {
+    properties.getProperty(Producer.KafkaProducerType + "." + "broker_list") match {
+      case brokerList: String => new KafkaServiceProducer(brokerList, sourceId)
+      case _ => throw new IllegalStateException("No configuration passed for Kafka")
+    }
+  }
+}
 
 /** Submit Messages to a Kafka-based queue
- *
- * @param zookeeperServers Comma-separated list of host:port pairs representing ZooKeeper coordination nodes
- * @param sourceId String representation of what created this. Auto-populated in messages.
- * @param encodePrettily Pretty-print JSON
- */
-class KafkaServiceProducer(zookeeperServers: String, sourceId:String, encodePrettily: Boolean) extends MessageCodec(sourceId) with Producer with QueueUtil {
+  *
+  * @param brokerList Comma-separated list of host:port pairs representing Kafka brokers
+  * @param sourceId String representation of what created this. Auto-populated in messages.
+  * @param encodePrettily Pretty-print JSON
+  */
+class KafkaServiceProducer(brokerList: String, sourceId:String, encodePrettily: Boolean = true) extends MessageCodec(sourceId) with Producer with QueueUtil {
   val log = new LazyStringLogger(getClass)
   var producer:KafkaProducer[String,  String] = null
 
   def start() = synchronized {
-    var props = new Properties()
-    props.put("zk.connect", zookeeperServers)
-    props.put("serializer.class", "kafka.serializer.StringEncoder")
-    val config = new ProducerConfig(props)
-    producer = new kafka.producer.Producer[String, String](config)
+    val props = new Properties()
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList)
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+
+    producer = new KafkaProducer(props)
   }
 
   def stop() = synchronized {
@@ -30,10 +41,10 @@ class KafkaServiceProducer(zookeeperServers: String, sourceId:String, encodePret
   }
 
   def apply(message: eurybates.Message) {
-    val queueName = "eurybates." + message.tag
+    val queueName = Name
     val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
 
-    log.info("Sending " + message + " on queue " + queueName)
-    producer.send(new KeyedMessage[String, String](queueName, encodedMessage))
+    log.info("Sending " + message + " on queue " + queueName + "with tag " + message.tag)
+    producer.send(new ProducerRecord[String, String](queueName, encodedMessage))
   }
 }

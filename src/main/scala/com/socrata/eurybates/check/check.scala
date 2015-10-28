@@ -41,8 +41,8 @@ object check {
 
     for(i <- 0 until 100) {
       producer(Message("hello", JNull))
-      if(i == 30) config.createService("first")
-      else if(i == 60) config.createService("second")
+      if(i == 30) config.registerService("first")
+      else if(i == 60) config.registerService("second")
       Thread.sleep(100)
     }
 

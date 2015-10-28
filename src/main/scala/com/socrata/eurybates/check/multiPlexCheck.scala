@@ -7,7 +7,7 @@ import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
 import com.socrata.eurybates.kafka.KafkaServiceConsumer
 import com.socrata.eurybates.activemq.{ActiveMQServiceProducer, ActiveMQServiceConsumer}
-import com.socrata.eurybates.multiplexer.MultiServiceProducer
+import com.socrata.eurybates.multiservice.MultiServiceProducer
 
 import kafka.KafkaServiceProducer
 
@@ -57,8 +57,8 @@ object multiPlexCheck {
     val config = new ServiceConfiguration(zkp, executor, producerAMQP.setServiceNames)
     config.start().foreach(config.destroyService)
 
-    config.createService("first")
-    config.createService("second")
+    config.registerService("first")
+    config.registerService("second")
 
     Thread.sleep(100)
     val producerKafka = new KafkaServiceProducer("localhost:2181", "hello!", true)

@@ -7,4 +7,7 @@ class NullProducer extends Producer {
   def apply(msg: Message) {
     message = msg
   }
+
+  def start = {}
+  def stop = {}
 }
