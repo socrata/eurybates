@@ -13,8 +13,8 @@ import org.apache.activemq.ActiveMQConnectionFactory
 // is more lenient than strict JMS.
 
 object ActiveMQServiceProducer {
-  def fromProperties(sourceId: String, properties: Properties) : Producer = {
-    properties.getProperty(Producer.ActiveMQProducerType + "." + "connection_string") match {
+  def apply(sourceId: String, properties: Properties) : Producer = {
+    properties.getProperty(Producer.ActiveMQProducerType + ".connection_string") match {
       case conn: String => new ActiveMQServiceProducer(openActiveMQConnection(conn), sourceId, true, true )
       case _ => throw new IllegalStateException("No configuration passed for ActiveMQ")
     }
@@ -34,7 +34,7 @@ object ActiveMQServiceProducer {
   }
 }
 
-class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean = true, closeConnection: Boolean = false)
+case class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean = true, closeConnection: Boolean = false)
   extends MessageCodec(sourceId) with Producer {
 
   private val log = new LazyStringLogger(getClass)
@@ -81,7 +81,7 @@ class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePr
     }
   }
 
-  def apply(message: Message) : Unit = {
+  def send(message: Message) : Unit = {
     log.trace("Sending " + message)
     val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
     val qMessage = session.createTextMessage(encodedMessage)

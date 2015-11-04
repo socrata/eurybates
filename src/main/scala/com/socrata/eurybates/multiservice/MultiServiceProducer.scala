@@ -15,19 +15,19 @@ import com.socrata.eurybates._
 object MultiServiceProducer {
   def fromProperties(sourceId: String, properties: Properties, producers: List[String]): Producer = {
     new MultiServiceProducer(sourceId, producers map {
-      case Producer.ActiveMQProducerType => ActiveMQServiceProducer.fromProperties(sourceId, properties)
-      case Producer.KafkaProducerType => KafkaServiceProducer.fromProperties(sourceId, properties)
-      case Producer.NoopProducerType => new NoopProducer()
+      case Producer.ActiveMQProducerType => ActiveMQServiceProducer(sourceId, properties)
+      case Producer.KafkaProducerType => KafkaServiceProducer(sourceId, properties)
+      case Producer.NoopProducerType => new NoopProducer(sourceId)
       case i : String => throw new IllegalStateException("Unknown producer configured: " + i)
       case _ => throw new IllegalStateException("Unknown producer configured.")
     })
   }
 }
 
-class MultiServiceProducer(sourceId:String, producers:List[Producer]) extends MessageCodec(sourceId) with Producer {
-  def apply(message: Message) {
+case class MultiServiceProducer(sourceId:String, producers:List[Producer]) extends MessageCodec(sourceId) with Producer {
+  override def send(message: Message) {
     for(producer <- producers) {
-      producer.apply(message)
+      producer.send(message)
     }
   }
 

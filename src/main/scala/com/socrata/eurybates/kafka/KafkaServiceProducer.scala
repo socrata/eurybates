@@ -9,7 +9,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, Produce
 
 
 object KafkaServiceProducer {
-  def fromProperties(sourceId: String, properties: Properties) : Producer = {
+  def apply(sourceId: String, properties: Properties) : Producer = {
     properties.getProperty(Producer.KafkaProducerType + "." + "broker_list") match {
       case brokerList: String => new KafkaServiceProducer(brokerList, sourceId)
       case _ => throw new IllegalStateException("No configuration passed for Kafka")
@@ -23,7 +23,7 @@ object KafkaServiceProducer {
   * @param sourceId String representation of what created this. Auto-populated in messages.
   * @param encodePrettily Pretty-print JSON
   */
-class KafkaServiceProducer(brokerList: String, sourceId:String, encodePrettily: Boolean = true) extends MessageCodec(sourceId) with Producer with QueueUtil {
+case class KafkaServiceProducer(brokerList: String, sourceId:String, encodePrettily: Boolean = true) extends MessageCodec(sourceId) with Producer with QueueUtil {
   val log = new LazyStringLogger(getClass)
   var producer:KafkaProducer[String,  String] = null
 
@@ -32,6 +32,7 @@ class KafkaServiceProducer(brokerList: String, sourceId:String, encodePrettily: 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList)
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+    props.put(ProducerConfig.ACKS_CONFIG,"-1")
 
     producer = new KafkaProducer(props)
   }
@@ -40,11 +41,11 @@ class KafkaServiceProducer(brokerList: String, sourceId:String, encodePrettily: 
     producer.close()
   }
 
-  def apply(message: eurybates.Message) {
+  def send(message: eurybates.Message) {
     val queueName = Name
     val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
 
     log.info("Sending " + message + " on queue " + queueName + "with tag " + message.tag)
-    producer.send(new ProducerRecord[String, String](queueName, encodedMessage))
+    producer.send(new ProducerRecord[String, String](queueName, encodedMessage)).get()
   }
 }

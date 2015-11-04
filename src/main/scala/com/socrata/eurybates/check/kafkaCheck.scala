@@ -41,8 +41,8 @@ object kafkaCheck {
 
 
     for(i <- 0 until 3) {
-      producer(Message("first", JNull))
-      producer(Message("second", JNull))
+      producer.send(Message("first", JNull))
+      producer.send(Message("second", JNull))
       Thread.sleep(10)
     }
 

@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException
 class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceName, Message, Throwable) => Unit, services: Map[ServiceName, Service]) extends Producer {
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
 
-  def apply(msg: Message) {
+  def send(msg: Message) {
     val forcedDetails = msg.details.forced
     val forcedMsg = msg.copy(details = forcedDetails)
 

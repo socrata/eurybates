@@ -81,8 +81,8 @@ object multiPlexCheck {
 
 
     for (i <- 0 until 100) {
-      multiplexer(Message("first", JNull))
-      multiplexer(Message("second", JNull))
+      multiplexer.send(Message("first", JNull))
+      multiplexer.send(Message("second", JNull))
       Thread.sleep(100)
     }
 

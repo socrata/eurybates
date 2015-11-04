@@ -6,7 +6,6 @@ import com.socrata.eurybates
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
-import com.socrata.eurybates.zookeeper.ServiceConfiguration
 import com.socrata.util.logging.LazyStringLogger
 
 /** A Producer accepts messages from user code and routes them to a topic.
@@ -23,11 +22,11 @@ object Producer {
   final val ActiveMQProducerType = "activemq"
   final val NoopProducerType = "null"
 
-  def fromProperties(sourceId: String, properties: Properties) : Producer = {
+  def apply(sourceId: String, properties: Properties) : Producer = {
     properties.getProperty("producers") match {
-      case KafkaProducerType => KafkaServiceProducer.fromProperties(sourceId, properties)
-      case ActiveMQProducerType => ActiveMQServiceProducer.fromProperties(sourceId, properties)
-      case NoopProducerType => new NoopProducer()
+      case KafkaProducerType => KafkaServiceProducer(sourceId, properties)
+      case ActiveMQProducerType => ActiveMQServiceProducer(sourceId, properties)
+      case NoopProducerType => new NoopProducer(sourceId)
       case i: String if i.isEmpty => throw new IllegalStateException("No producers configured")
       case i: String => MultiServiceProducer.fromProperties(sourceId, properties, i.split(',').toList)
       case _ => throw new IllegalStateException("No producers configured")
@@ -42,7 +41,7 @@ trait Producer {
 
   def stop()
 
-  def apply(message: eurybates.Message)
+  def send(message: eurybates.Message)
 
   def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
     //Default is noop
@@ -50,4 +49,5 @@ trait Producer {
   }
 
   def jSetServiceNames : Function1[Set[ServiceName], Unit] = setServiceNames _
+
 }
