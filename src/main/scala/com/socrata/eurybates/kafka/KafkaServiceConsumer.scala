@@ -6,7 +6,7 @@ import java.nio.charset.{StandardCharsets}
 import java.util.concurrent.ExecutorService
 import java.util.Properties
 import util.logging.LazyStringLogger
-import org.apache.kafka.clients.consumer.{ConsumerRecord, KafkaConsumer, Consumer}
+import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer, Consumer}
 import eurybates.{MessageCodec, ServiceName, Service, Message}
 
 import com.rojoma.json.v3.io.JsonReaderException
@@ -14,6 +14,7 @@ import com.rojoma.json.v3.util.JsonUtil
 import com.rojoma.json.v3.codec.DecodeError.InvalidValue
 import com.rojoma.json.v3.ast.JString
 import com.rojoma.json.v3.codec.Path
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
 class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service])
@@ -24,21 +25,26 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
   var consumers: Iterable[Consumer[Array[Byte],Array[Byte]]] = Seq[Consumer[Array[Byte],Array[Byte]]]()
 
   def start() = synchronized {
+    log.info("Starting kafka consumer with brokers: " + brokerList)
+
     val props = new Properties
-    props.put("metadata.broker.list", brokerList)
-    props.put("session.timeout.ms", "1000")
-    props.put("enable.auto.commit", "true")
-    props.put("auto.commit.interval.ms", "10000")
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList)
+    props.put(ConsumerConfig.SESSION_TIMEOUT_MS, "1000")
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
+    props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "10000")
 
     consumers = services.map {
       case (serviceName, service) =>
         val serviceProps = new Properties(props)
-        serviceProps.put("group.id", serviceName)
+        serviceProps.put(ConsumerConfig.GROUP_ID_CONFIG, serviceName)
 
         val consumer = new KafkaConsumer[Array[Byte],Array[Byte]](serviceProps)
 
+        consumer.subscribe(Name)
+
         executor.execute(new Runnable() {
           def run(): Unit = {
+            log.info("Starting polling thread for " + serviceName)
             pollAndProcess(consumer, service)()
           }
         })
@@ -49,6 +55,7 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
 
   def pollAndProcess(consumer: Consumer[Array[Byte],Array[Byte]], service: Service) = {
     new (() => Unit) {
+      @tailrec
       def apply(): Unit = {
         val polled = consumer.poll(0)
 
@@ -79,11 +86,13 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
 }
 
   def stop() = synchronized {
+    log.info("Stopping consumers and threads")
     for(consumer: Consumer[Array[Byte],Array[Byte]] <- consumers) {
       consumer.close()
     }
 
     executor.shutdownNow
+    log.info("Successfully stopped consumers and threads")
   }
 
   def close() = synchronized {

@@ -21,14 +21,14 @@ import com.socrata.util.logging.LazyStringLogger
 object Producer {
   final val KafkaProducerType = "kafka"
   final val ActiveMQProducerType = "activemq"
-  final val NullProducerType = "null"
+  final val NoopProducerType = "null"
 
   def fromProperties(sourceId: String, properties: Properties) : Producer = {
     properties.getProperty("producers") match {
       case KafkaProducerType => KafkaServiceProducer.fromProperties(sourceId, properties)
       case ActiveMQProducerType => ActiveMQServiceProducer.fromProperties(sourceId, properties)
-      case NullProducerType => new NullProducer()
-      case i: String if i.length.equals(0) => throw new IllegalStateException("No producers configured")
+      case NoopProducerType => new NoopProducer()
+      case i: String if i.isEmpty => throw new IllegalStateException("No producers configured")
       case i: String => MultiServiceProducer.fromProperties(sourceId, properties, i.split(',').toList)
       case _ => throw new IllegalStateException("No producers configured")
     }
@@ -36,6 +36,8 @@ object Producer {
 }
 
 trait Producer {
+  private val log = new LazyStringLogger(getClass)
+
   def start()
 
   def stop()
@@ -44,7 +46,7 @@ trait Producer {
 
   def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
     //Default is noop
-    System.out.println("No Op : Not Setting service names")
+    log.info("No Op : Not Setting service names")
   }
 
   def jSetServiceNames : Function1[Set[ServiceName], Unit] = setServiceNames _

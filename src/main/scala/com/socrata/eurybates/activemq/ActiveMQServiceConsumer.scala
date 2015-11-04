@@ -55,8 +55,9 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
             sleepTime = sleepMax.max(sleepTime * 2)
         }
       }
-      sys.error("can't get here")
+      sys.error("Should never get here")
     }
+
     override def run() : Unit = {
       try {
         while(true) {

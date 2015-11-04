@@ -15,7 +15,7 @@ import org.apache.activemq.ActiveMQConnectionFactory
 object ActiveMQServiceProducer {
   def fromProperties(sourceId: String, properties: Properties) : Producer = {
     properties.getProperty(Producer.ActiveMQProducerType + "." + "connection_string") match {
-      case conn: String => new ActiveMQServiceProducer(openActiveMQConnection(conn), sourceId )
+      case conn: String => new ActiveMQServiceProducer(openActiveMQConnection(conn), sourceId, true, true )
       case _ => throw new IllegalStateException("No configuration passed for ActiveMQ")
     }
   }
@@ -34,10 +34,10 @@ object ActiveMQServiceProducer {
   }
 }
 
-class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean = true)
+class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean = true, closeConnection: Boolean = false)
   extends MessageCodec(sourceId) with Producer {
 
-  val log = new LazyStringLogger(getClass)
+  private val log = new LazyStringLogger(getClass)
 
   var session: Session = _
   var producer: MessageProducer = _
@@ -65,6 +65,10 @@ class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePr
     producer = null
     session.close()
     session = null
+
+    if(closeConnection){
+      connection.close()
+    }
   }
 
   override def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {

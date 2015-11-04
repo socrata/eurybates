@@ -12,6 +12,7 @@ import java.util.concurrent.Executor
 import scala.annotation.tailrec
 import scala.util.{Success, Try}
 
+//TODO: Remove ZooKeeper dependency
 class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnChanges: Set[ServiceName] => Unit) {
   final def start(): Traversable[ServiceName] = synchronized {
     while(true) {

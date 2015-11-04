@@ -17,7 +17,7 @@ object MultiServiceProducer {
     new MultiServiceProducer(sourceId, producers map {
       case Producer.ActiveMQProducerType => ActiveMQServiceProducer.fromProperties(sourceId, properties)
       case Producer.KafkaProducerType => KafkaServiceProducer.fromProperties(sourceId, properties)
-      case Producer.NullProducerType => new NullProducer()
+      case Producer.NoopProducerType => new NoopProducer()
       case i : String => throw new IllegalStateException("Unknown producer configured: " + i)
       case _ => throw new IllegalStateException("Unknown producer configured.")
     })
