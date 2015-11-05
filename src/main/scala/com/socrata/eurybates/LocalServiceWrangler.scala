@@ -1,6 +1,10 @@
 package com.socrata
 package eurybates
 
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
+
 import scala.collection.JavaConversions._
 
 import java.util.concurrent.ExecutorService
@@ -21,6 +25,10 @@ class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceNa
     synchronized {
       for(worker <- workers) worker.queue.add(forcedMsg)
     }
+  }
+
+  def supportedProducerTypes() : Seq[ProducerType] = {
+    Seq(ProducerType.LocalService)
   }
 
   def start() = synchronized {

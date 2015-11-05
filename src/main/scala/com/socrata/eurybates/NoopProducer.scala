@@ -2,6 +2,8 @@ package com.socrata
 package eurybates
 
 import com.rojoma.json.v3.util.JsonUtil
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.util.logging.LazyStringLogger
 
 case class NoopProducer(sourceId: String) extends MessageCodec(sourceId) with Producer {
@@ -13,4 +15,8 @@ case class NoopProducer(sourceId: String) extends MessageCodec(sourceId) with Pr
 
   def start = {}
   def stop = {}
+
+  def supportedProducerTypes(): Seq[ProducerType] = {
+    Seq(ProducerType.NoOp)
+  }
 }

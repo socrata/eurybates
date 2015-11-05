@@ -5,6 +5,7 @@ package kafka
 import java.nio.charset.{StandardCharsets}
 import java.util.concurrent.ExecutorService
 import java.util.Properties
+import com.socrata.eurybates.Producer.ProducerType
 import util.logging.LazyStringLogger
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer, Consumer}
 import eurybates.{MessageCodec, ServiceName, Service, Message}
@@ -97,5 +98,9 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
 
   def close() = synchronized {
 
+  }
+
+  def supportedProducerTypes() = {
+    Seq(ProducerType.Kafka)
   }
 }

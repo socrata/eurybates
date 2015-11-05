@@ -2,6 +2,9 @@ package com.socrata.eurybates.multiservice
 
 import java.util.Properties
 
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates._
@@ -15,9 +18,9 @@ import com.socrata.eurybates._
 object MultiServiceProducer {
   def fromProperties(sourceId: String, properties: Properties, producers: List[String]): Producer = {
     new MultiServiceProducer(sourceId, producers map {
-      case Producer.ActiveMQProducerType => ActiveMQServiceProducer(sourceId, properties)
-      case Producer.KafkaProducerType => KafkaServiceProducer(sourceId, properties)
-      case Producer.NoopProducerType => new NoopProducer(sourceId)
+      case ProducerType.ActiveMQ => ActiveMQServiceProducer(sourceId, properties)
+      case ProducerType.Kafka => KafkaServiceProducer(sourceId, properties)
+      case ProducerType.NoOp => new NoopProducer(sourceId)
       case i : String => throw new IllegalStateException("Unknown producer configured: " + i)
       case _ => throw new IllegalStateException("Unknown producer configured.")
     })
@@ -41,5 +44,20 @@ case class MultiServiceProducer(sourceId:String, producers:List[Producer]) exten
 
   override def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = synchronized {
     producers.foreach((producer) => producer.setServiceNames(serviceNames))
+  }
+
+  override def supportedProducerTypes() = producers.flatMap(_.supportedProducerTypes)
+
+  override def send(message: Message, producerType: ProducerType): Unit = {
+    producers.foreach((producer) =>
+      try {
+        producer.send(message, producerType)
+        return
+      } catch {
+        case iae: IllegalArgumentException =>
+      }
+    )
+
+    throw new IllegalArgumentException("Could not publish to any of the publishers")
   }
 }

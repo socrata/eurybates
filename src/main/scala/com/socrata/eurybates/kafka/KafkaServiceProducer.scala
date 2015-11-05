@@ -2,6 +2,7 @@ package com.socrata
 package eurybates.kafka
 
 import com.rojoma.json.v3.util.JsonUtil
+import com.socrata.eurybates.Producer.ProducerType
 import util.logging.LazyStringLogger
 import java.util.Properties
 import com.socrata.eurybates._
@@ -10,7 +11,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, Produce
 
 object KafkaServiceProducer {
   def apply(sourceId: String, properties: Properties) : Producer = {
-    properties.getProperty(Producer.KafkaProducerType + "." + "broker_list") match {
+    properties.getProperty(ProducerType.Kafka + "." + "broker_list") match {
       case brokerList: String => new KafkaServiceProducer(brokerList, sourceId)
       case _ => throw new IllegalStateException("No configuration passed for Kafka")
     }
@@ -47,5 +48,9 @@ case class KafkaServiceProducer(brokerList: String, sourceId:String, encodePrett
 
     log.info("Sending " + message + " on queue " + queueName + "with tag " + message.tag)
     producer.send(new ProducerRecord[String, String](queueName, encodedMessage)).get()
+  }
+
+  def supportedProducerTypes() = {
+    Seq(ProducerType.Kafka)
   }
 }

@@ -3,10 +3,14 @@ package com.socrata.eurybates
 import java.util.Properties
 
 import com.socrata.eurybates
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
 import com.socrata.util.logging.LazyStringLogger
+import org.apache.kafka.clients.producer.ProducerConfig
 
 /** A Producer accepts messages from user code and routes them to a topic.
   *
@@ -18,15 +22,19 @@ import com.socrata.util.logging.LazyStringLogger
   */
 
 object Producer {
-  final val KafkaProducerType = "kafka"
-  final val ActiveMQProducerType = "activemq"
-  final val NoopProducerType = "null"
+  object ProducerType extends Enumeration{
+    type ProducerType = String
+    val ActiveMQ = "activemq"
+    val Kafka = "kafka"
+    val LocalService = "local_service"
+    val NoOp = "noop"
+  }
 
   def apply(sourceId: String, properties: Properties) : Producer = {
     properties.getProperty("producers") match {
-      case KafkaProducerType => KafkaServiceProducer(sourceId, properties)
-      case ActiveMQProducerType => ActiveMQServiceProducer(sourceId, properties)
-      case NoopProducerType => new NoopProducer(sourceId)
+      case ProducerType.Kafka => KafkaServiceProducer(sourceId, properties)
+      case ProducerType.ActiveMQ => ActiveMQServiceProducer(sourceId, properties)
+      case ProducerType.NoOp => new NoopProducer(sourceId)
       case i: String if i.isEmpty => throw new IllegalStateException("No producers configured")
       case i: String => MultiServiceProducer.fromProperties(sourceId, properties, i.split(',').toList)
       case _ => throw new IllegalStateException("No producers configured")
@@ -41,7 +49,17 @@ trait Producer {
 
   def stop()
 
+  def supportedProducerTypes() : Seq[ProducerType]
+
   def send(message: eurybates.Message)
+
+  def send(message: eurybates.Message, producerType: ProducerType) : Unit = {
+    if(supportedProducerTypes.contains(producerType)){
+      throw new IllegalArgumentException("Trying to send unsupported producer type for this producer")
+    }
+
+    send(message)
+  }
 
   def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
     //Default is noop

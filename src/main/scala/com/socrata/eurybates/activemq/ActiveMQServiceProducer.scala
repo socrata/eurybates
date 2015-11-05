@@ -4,6 +4,9 @@ package activemq
 
 import java.lang.IllegalStateException
 import java.util.Properties
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import util.logging.LazyStringLogger
 import javax.jms.{Connection, Queue, MessageProducer, DeliveryMode, Session, JMSException}
 import com.rojoma.json.v3.util.JsonUtil
@@ -14,7 +17,7 @@ import org.apache.activemq.ActiveMQConnectionFactory
 
 object ActiveMQServiceProducer {
   def apply(sourceId: String, properties: Properties) : Producer = {
-    properties.getProperty(Producer.ActiveMQProducerType + ".connection_string") match {
+    properties.getProperty(ProducerType.ActiveMQ + ".connection_string") match {
       case conn: String => new ActiveMQServiceProducer(openActiveMQConnection(conn), sourceId, true, true )
       case _ => throw new IllegalStateException("No configuration passed for ActiveMQ")
     }
@@ -87,6 +90,10 @@ case class ActiveMQServiceProducer(connection: Connection, sourceId: String, enc
     val qMessage = session.createTextMessage(encodedMessage)
     val target = queue
     if(target != null) producer.send(target, qMessage)
+  }
+
+  def supportedProducerTypes() = {
+    Seq(ProducerType.ActiveMQ)
   }
 
   setServiceNames(Set.empty)
