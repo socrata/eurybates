@@ -4,10 +4,9 @@ import java.util.Properties
 
 import com.socrata.eurybates.Producer.ProducerType
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
-import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates._
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
-import com.socrata.eurybates._
 
 /** A producer that sends to multiple sub-producers
  *
@@ -16,7 +15,7 @@ import com.socrata.eurybates._
  */
 
 object MultiServiceProducer {
-  def fromProperties(sourceId: String, properties: Properties, producers: List[String]): Producer = {
+  def apply(sourceId: String, properties: Properties, producers: List[String]): Producer = {
     new MultiServiceProducer(sourceId, producers map {
       case ProducerType.ActiveMQ => ActiveMQServiceProducer(sourceId, properties)
       case ProducerType.Kafka => KafkaServiceProducer(sourceId, properties)
@@ -28,17 +27,14 @@ object MultiServiceProducer {
 }
 
 case class MultiServiceProducer(sourceId:String, producers:List[Producer]) extends MessageCodec(sourceId) with Producer {
-  override def send(message: Message) {
-    for(producer <- producers) {
-      producer.send(message)
-    }
-  }
 
-  def start() = synchronized {
+  override def send(message: Message) = producers.foreach(_.send(message))
+
+  override def start() = synchronized {
     producers.foreach((producer) => producer.start())
   }
 
-  def stop() = synchronized {
+  override def stop() = synchronized {
     producers.foreach((producer) => producer.stop())
   }
 

@@ -18,6 +18,14 @@ import com.rojoma.json.v3.codec.Path
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
+/**
+  *
+  * @param brokerList Comma separated list of Kafka broker addresses.  kafka-broker-1:KAFKA_PORT
+  * @param sourceId A Unique ID that identifies this Consumer.
+  * @param executor ExecutorService to run the consumer
+  * @param handlingLogger UNUSED
+  * @param services Services used to handle messages from a topic.
+  */
 class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service])
   extends MessageCodec(sourceId)
 {

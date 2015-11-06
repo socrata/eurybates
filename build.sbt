@@ -1,15 +1,39 @@
-name := "eurybates"
+import Dependencies.Resolvers._
+import Dependencies._
+import sbt.Keys._
 
-scalaVersion := "2.10.6"
-
-libraryDependencies ++= Seq(
-  "org.apache.activemq" % "activemq-core" % "5.7.0" % "optional",
-  "org.apache.kafka" % "kafka-clients" % "0.8.2.1" % "optional",
-  "com.rojoma" %% "rojoma-json-v3" % "[3.2.1,4.0.0)",
-  "com.socrata" %% "socrata-zookeeper" % "0.1.2"
+/**
+  * Setting common to all projects.
+  *
+  * NOTE: This must be added to all Subprojects!
+  */
+lazy val commonSettings = Seq(
+  organization := "com.socrata",
+  scalaVersion := "2.10.6",
+  resolvers ++=  Seq(
+    socrata_maven,
+    socrata_ivy
+  ),
+  scalastyleFailOnError in Compile := false
 )
 
+lazy val eurybates = (project in file(".")).
+  settings(commonSettings: _*).
+  settings(
+    name := "eurybates",
+    crossScalaVersions := Seq("2.10.6", "2.11.7"),
+    libraryDependencies ++= Seq(
+      activemq,
+      kafka_clients,
+      rojoma_json,
+      socrata_zookeeper,
+      scala_test,
+      scala_logging
+    )
+  )
+
+
 // TODO: enable static analysis build failures
-com.socrata.sbtplugins.StylePlugin.StyleKeys.styleFailOnError in Compile := false
+// TODO: Unable to incorporate in common settings....????
 com.socrata.sbtplugins.findbugs.JavaFindBugsPlugin.JavaFindBugsKeys.findbugsFailOnError in Compile := false
 com.socrata.sbtplugins.findbugs.JavaFindBugsPlugin.JavaFindBugsKeys.findbugsFailOnError in Test := false

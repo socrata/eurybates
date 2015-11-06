@@ -11,7 +11,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, Produce
 
 object KafkaServiceProducer {
   def apply(sourceId: String, properties: Properties) : Producer = {
-    properties.getProperty(ProducerType.Kafka + "." + "broker_list") match {
+    properties.getProperty("eurybates." + ProducerType.Kafka + "." + "broker_list") match {
       case brokerList: String => new KafkaServiceProducer(brokerList, sourceId)
       case _ => throw new IllegalStateException("No configuration passed for Kafka")
     }
