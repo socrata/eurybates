@@ -14,16 +14,18 @@ import com.rojoma.json.v3.codec.DecodeError.InvalidValue
 import com.rojoma.json.v3.ast.JString
 import com.rojoma.json.v3.codec.Path
 
-class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
+class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService,
+                              handlingLogger: (ServiceName, String, Throwable) => Unit,
+                              services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
   val log = new LazyStringLogger(getClass)
 
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
 
-  def start() = synchronized {
+  def start() : Unit = synchronized {
     workers.foreach(_.start())
   }
 
-  def stop() = synchronized {
+  def stop() : Unit = synchronized {
     workers.foreach(_.close())
     workers.foreach(_.join())
   }
@@ -33,11 +35,14 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
     val queue = session.createQueue(queueName(serviceName))
     val consumer = session.createConsumer(queue)
 
+    final val InitialSleepTime = 10L
+    final val SleepTimeMaximum = 10000L
+
     setName(getId() + " / Eurybates activemq service " + serviceName)
 
     private def nextMessage(): javax.jms.Message = {
-      var sleepTime = 10L
-      val sleepMax = 10000L
+      var sleepTime = InitialSleepTime
+      val sleepMax = SleepTimeMaximum
       while(true) {
         try {
           return consumer.receive()
@@ -50,9 +55,10 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
             sleepTime = sleepMax.max(sleepTime * 2)
         }
       }
-      sys.error("can't get here")
+      sys.error("Should never get here")
     }
-    override def run() {
+
+    override def run() : Unit = {
       try {
         while(true) {
           val qMsg = nextMessage()
@@ -64,7 +70,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
           // guarantee that this loop will terminate.
 
           val result = executor.submit(new Callable[Unit] {
-            def call() {
+            def call() = {
               qMsg match {
                 case tm: TextMessage =>
                   val msg = try {
@@ -95,7 +101,8 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
               if(qMsg.isInstanceOf[TextMessage]) {
                 handlingLogger(serviceName, qMsg.asInstanceOf[TextMessage].getText, e.getCause)
               } else {
-                log.error("Received an unexpected exception while processing an instance of " + qMsg.getClass, e.getCause)
+                log.error("Received an unexpected exception while processing an instance of " + qMsg.getClass,
+                  e.getCause)
               }
           }
         }
@@ -104,7 +111,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
       }
     }
 
-    def close() = synchronized {
+    def close() : Unit = synchronized {
       consumer.close()
       session.close()
     }

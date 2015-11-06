@@ -3,14 +3,44 @@ package eurybates
 package activemq
 
 import java.lang.IllegalStateException
+import java.util.Properties
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import util.logging.LazyStringLogger
-import javax.jms.{Connection, Queue, MessageProducer, DeliveryMode, Session}
+import javax.jms.{Connection, Queue, MessageProducer, DeliveryMode, Session, JMSException}
 import com.rojoma.json.v3.util.JsonUtil
+import org.apache.activemq.ActiveMQConnectionFactory
 
 // technically, a Session is supposed to be used by only a single thread.  Fortunately, activemq
 // is more lenient than strict JMS.
-class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean) extends MessageCodec(sourceId) with Producer {
-  val log = new LazyStringLogger(getClass)
+
+object ActiveMQServiceProducer {
+  def apply(sourceId: String, properties: Properties) : Producer = {
+    properties.getProperty(ProducerType.ActiveMQ + ".connection_string") match {
+      case conn: String => new ActiveMQServiceProducer(openActiveMQConnection(conn), sourceId, true, true )
+      case _ => throw new IllegalStateException("No configuration passed for ActiveMQ")
+    }
+  }
+
+  def openActiveMQConnection(amqUrl: String): Connection = {
+    try {
+      val connFactory: ActiveMQConnectionFactory = new ActiveMQConnectionFactory(amqUrl)
+      val amqConnection = connFactory.createConnection
+      amqConnection.start
+      amqConnection
+    } catch {
+      case e: JMSException => {
+        throw new IllegalStateException("Unable to set up activemq connection", e)
+      }
+    }
+  }
+}
+
+case class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePrettily: Boolean = true, closeConnection: Boolean = false)
+  extends MessageCodec(sourceId) with Producer {
+
+  private val log = new LazyStringLogger(getClass)
 
   var session: Session = _
   var producer: MessageProducer = _
@@ -18,7 +48,7 @@ class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePr
   @volatile
   var queue: Queue = null
 
-  def start() = synchronized {
+  def start() : Unit = synchronized {
     if(producer != null) throw new IllegalStateException("Producer is already started")
     try {
       session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
@@ -26,37 +56,44 @@ class ActiveMQServiceProducer(connection: Connection, sourceId: String, encodePr
       producer.setDeliveryMode(DeliveryMode.PERSISTENT)
     } catch {
       case e: Exception =>
-        if(session != null) session.close();
+        if(session != null) session.close()
         session = null
         throw e
     }
   }
 
-  def stop() = synchronized {
+  def stop() : Unit = synchronized {
     if(producer == null) throw new IllegalStateException("Producer is already stopped")
     producer.close()
     producer = null
     session.close()
     session = null
+
+    if(closeConnection){
+      connection.close()
+    }
   }
 
-  def setServiceNames(serviceNames: Traversable[ServiceName]) {
-    log.info("Setting service names to " + serviceNames)
-    if(serviceNames.isEmpty) queue = null
-    else {
-      val newNames = serviceNames.map("eurybates." + _).mkString(",")
+  override def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
+    log.info("Setting service names to " + serviceNames + " for ActiveMQ")
+    if(serviceNames.isEmpty) {
+      queue = null
+    } else {
+      val newNames = serviceNames.map(Name + "." + _).mkString(",")
       queue = session.createQueue(newNames)
     }
   }
 
-  def jSetServiceNames : Function1[Set[ServiceName], Unit] = setServiceNames _
-
-  def apply(message: Message) {
+  def send(message: Message) : Unit = {
     log.trace("Sending " + message)
     val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
     val qMessage = session.createTextMessage(encodedMessage)
     val target = queue
     if(target != null) producer.send(target, qMessage)
+  }
+
+  def supportedProducerTypes() = {
+    Seq(ProducerType.ActiveMQ)
   }
 
   setServiceNames(Set.empty)
