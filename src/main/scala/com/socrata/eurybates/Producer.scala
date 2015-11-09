@@ -3,14 +3,12 @@ package com.socrata.eurybates
 import java.util.Properties
 
 import com.socrata.eurybates
-import com.socrata.eurybates.Producer.ProducerType
-import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
 import com.socrata.util.logging.LazyStringLogger
-import org.apache.kafka.clients.producer.ProducerConfig
+import com.typesafe.scalalogging.slf4j.LazyLogging
 
 /** A Producer accepts messages from user code and routes them to a topic.
   *
@@ -31,18 +29,18 @@ object Producer {
   }
 
   def apply(sourceId: String, properties: Properties) : Producer = {
-    properties.getProperty("producers") match {
+    properties.getProperty("eurybates.producers") match {
       case ProducerType.Kafka => KafkaServiceProducer(sourceId, properties)
       case ProducerType.ActiveMQ => ActiveMQServiceProducer(sourceId, properties)
       case ProducerType.NoOp => new NoopProducer(sourceId)
       case i: String if i.isEmpty => throw new IllegalStateException("No producers configured")
-      case i: String => MultiServiceProducer.fromProperties(sourceId, properties, i.split(',').toList)
+      case i: String => MultiServiceProducer(sourceId, properties, i.split(',').toList)
       case _ => throw new IllegalStateException("No producers configured")
     }
   }
 }
 
-trait Producer {
+trait Producer extends LazyLogging {
   private val log = new LazyStringLogger(getClass)
 
   def start()
@@ -54,7 +52,7 @@ trait Producer {
   def send(message: eurybates.Message)
 
   def send(message: eurybates.Message, producerType: ProducerType) : Unit = {
-    if(supportedProducerTypes.contains(producerType)){
+    if(supportedProducerTypes().contains(producerType)){
       throw new IllegalArgumentException("Trying to send unsupported producer type for this producer")
     }
 

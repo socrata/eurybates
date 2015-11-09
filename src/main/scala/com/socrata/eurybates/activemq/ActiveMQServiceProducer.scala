@@ -2,14 +2,12 @@ package com.socrata
 package eurybates
 package activemq
 
-import java.lang.IllegalStateException
 import java.util.Properties
-import com.socrata.eurybates.Producer.ProducerType
-import com.socrata.eurybates.Producer.ProducerType.ProducerType
-import com.socrata.eurybates.Producer.ProducerType.ProducerType
-import util.logging.LazyStringLogger
-import javax.jms.{Connection, Queue, MessageProducer, DeliveryMode, Session, JMSException}
+import javax.jms.{Connection, DeliveryMode, JMSException, MessageProducer, Queue, Session}
+
 import com.rojoma.json.v3.util.JsonUtil
+import com.socrata.eurybates.Producer.ProducerType
+import com.socrata.util.logging.LazyStringLogger
 import org.apache.activemq.ActiveMQConnectionFactory
 
 // technically, a Session is supposed to be used by only a single thread.  Fortunately, activemq
@@ -17,7 +15,7 @@ import org.apache.activemq.ActiveMQConnectionFactory
 
 object ActiveMQServiceProducer {
   def apply(sourceId: String, properties: Properties) : Producer = {
-    properties.getProperty(ProducerType.ActiveMQ + ".connection_string") match {
+    properties.getProperty("eurybates." + ProducerType.ActiveMQ + ".connection_string") match {
       case conn: String => new ActiveMQServiceProducer(openActiveMQConnection(conn), sourceId, true, true )
       case _ => throw new IllegalStateException("No configuration passed for ActiveMQ")
     }
