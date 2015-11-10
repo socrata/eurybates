@@ -33,7 +33,7 @@ Ensure you have the Socrata Artifactory Resolver added the list of resolvers
 
 ```
 resolvers ++= Seq(
-    "socrata maven" at "https://repo.socrata.com/artifactory/libs-release"
+    "socrata maven" at "https://repository-socrata-oss.forge.cloudbees.com/release"
 )
 ```
 
