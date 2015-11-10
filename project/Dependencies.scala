@@ -12,7 +12,7 @@ object Dependencies {
     val activemq = "5.7.0"
     val kafka_clients = "0.8.2.1"
     val rojoma_json = "[3.2.1,4.0.0]"
-    val socrata_zookeeper = "0.1.2"
+    val socrata_zookeeper = "0.1.4"
     val scala_test = "2.2.5"
     val scala_logging = "2.1.2" // Scala Logging version for Scala 2.10 and 2.11
   }
