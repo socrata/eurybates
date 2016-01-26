@@ -14,12 +14,22 @@ import com.rojoma.json.v3.codec.DecodeError.InvalidValue
 import com.rojoma.json.v3.ast.JString
 import com.rojoma.json.v3.codec.Path
 
+import com.socrata.eurybates.types.SessionMode
+
+
+trait Transacted { this: ActiveMQServiceConsumer =>
+  override def sessionMode = SessionMode.TRANSACTED
+}
+
 class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService,
                               handlingLogger: (ServiceName, String, Throwable) => Unit,
                               services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
   val log = new LazyStringLogger(getClass)
 
+
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
+
+  def sessionMode = SessionMode.NONE
 
   def start() : Unit = synchronized {
     workers.foreach(_.start())
@@ -30,8 +40,18 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
     workers.foreach(_.join())
   }
 
+  case class AMQRollbackMessageException() extends Exception
+
   private class ServiceProcess(serviceName: ServiceName, service: Service) extends Thread {
-    var session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+    val transactional = sessionMode match {
+      case SessionMode.TRANSACTED => true
+      case _ => false
+    }
+    val amqSessionMode = sessionMode match {
+      case SessionMode.TRANSACTED => Session.SESSION_TRANSACTED
+      case _ => Session.AUTO_ACKNOWLEDGE
+    }
+    var session = connection.createSession(transactional, amqSessionMode)
     val queue = session.createQueue(queueName(serviceName))
     val consumer = session.createConsumer(queue)
 
@@ -39,6 +59,26 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
     final val SleepTimeMaximum = 10000L
 
     setName(getId() + " / Eurybates activemq service " + serviceName)
+
+    private def commit(): Unit = {
+      sessionMode match {
+        case SessionMode.TRANSACTED => {
+          log.info("Committing current AMQ transaction")
+          session.commit()
+        }
+        case _ => log.info("Commit called but AMQ session is not transactional, ignoring.")
+      }
+    }
+
+    private def rollback(): Unit = {
+      sessionMode match {
+        case SessionMode.TRANSACTED => {
+          log.info("Rolling back current AMQ transaction")
+          session.rollback()
+        }
+        case _ => log.info("Rollback called but AMQ session is not transactional, ignoring.")
+      }
+    }
 
     private def nextMessage(): javax.jms.Message = {
       var sleepTime = InitialSleepTime
@@ -58,7 +98,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
       sys.error("Should never get here")
     }
 
-    override def run() : Unit = {
+    override def run(): Unit = {
       try {
         while(true) {
           val qMsg = nextMessage()
@@ -81,29 +121,43 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
                   }
                   msg match {
                     case Right(m) =>
-                      service.messageReceived(m)
+                      try {
+                        service.messageReceived(m)
+                        commit()
+                      } catch {
+                        case _: AMQRollbackMessageException => rollback()
+                        case e: Throwable => {
+                          rollback()
+                          throw e
+                        }
+                      }
                     case Left(err) =>
                       log.warn("Received a non-JSON text message: " + err)
+                      commit()
                   }
                 case _ =>
                   log.warn("Received a non-TextMessage from JMS; actual type received is " + qMsg.getClass)
+                  commit()
               }
             }
           })
           try {
             result.get()
           } catch {
-            case e: InterruptedException =>
+            case e: InterruptedException => {
               // don't cancel it; we've already acknowledged the message
               // so let the executor finish handling it.
               throw e
-            case e: ExecutionException =>
+            }
+            case e: ExecutionException => {
               if(qMsg.isInstanceOf[TextMessage]) {
                 handlingLogger(serviceName, qMsg.asInstanceOf[TextMessage].getText, e.getCause)
               } else {
                 log.error("Received an unexpected exception while processing an instance of " + qMsg.getClass,
                   e.getCause)
               }
+              rollback()
+           }
           }
         }
       } catch {
