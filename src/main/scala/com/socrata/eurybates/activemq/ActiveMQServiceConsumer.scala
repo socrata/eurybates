@@ -63,20 +63,20 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
     private def commit(): Unit = {
       sessionMode match {
         case SessionMode.TRANSACTED => {
-          log.info("Committing current AMQ transaction")
+          log.debug("Committing current AMQ transaction")
           session.commit()
         }
-        case _ => log.info("Commit called but AMQ session is not transactional, ignoring.")
+        case _ => /* Commit called but AMQ session is not transactional, ignoring. logging removed at user request */
       }
     }
 
     private def rollback(): Unit = {
       sessionMode match {
         case SessionMode.TRANSACTED => {
-          log.info("Rolling back current AMQ transaction")
+          log.debug("Rolling back current AMQ transaction")
           session.rollback()
         }
-        case _ => log.info("Rollback called but AMQ session is not transactional, ignoring.")
+        case _ => /* Rollback called but AMQ session is not transactional, ignoring. logging removed at user request */
       }
     }
 
