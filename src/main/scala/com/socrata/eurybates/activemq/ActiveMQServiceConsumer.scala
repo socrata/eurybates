@@ -21,6 +21,8 @@ trait Transacted { this: ActiveMQServiceConsumer =>
   override def sessionMode = SessionMode.TRANSACTED
 }
 
+case class AMQRollbackMessageException() extends Exception
+
 class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService,
                               handlingLogger: (ServiceName, String, Throwable) => Unit,
                               services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
@@ -39,8 +41,6 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
     workers.foreach(_.close())
     workers.foreach(_.join())
   }
-
-  case class AMQRollbackMessageException() extends Exception
 
   private class ServiceProcess(serviceName: ServiceName, service: Service) extends Thread {
     val transactional = sessionMode match {
