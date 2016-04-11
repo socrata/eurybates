@@ -21,7 +21,7 @@ trait Transacted { this: ActiveMQServiceConsumer =>
   override def sessionMode = SessionMode.TRANSACTED
 }
 
-case class AMQRollbackMessageException() extends Exception
+case class AMQRollbackMessageException(msg: String) extends Exception(msg)
 
 class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService,
                               handlingLogger: (ServiceName, String, Throwable) => Unit,
@@ -66,7 +66,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
           log.debug("Committing current AMQ transaction")
           session.commit()
         }
-        case _ => /* Commit called but AMQ session is not transactional, ignoring. logging removed at user request */
+        case _ => /* Commit called but AMQ session is not transactional, ignoring. */
       }
     }
 
@@ -76,7 +76,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
           log.debug("Rolling back current AMQ transaction")
           session.rollback()
         }
-        case _ => /* Rollback called but AMQ session is not transactional, ignoring. logging removed at user request */
+        case _ => /* Rollback called but AMQ session is not transactional, ignoring. */
       }
     }
 
