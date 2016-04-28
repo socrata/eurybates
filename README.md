@@ -1,6 +1,6 @@
 ## Eurybates
 
-Eurybates is a library for producing to and consuming from queues. There is one queue per consumer, and producers write to each consumer's queue, after getting the list of consumer queues from Zookeeper. Each consumer receives all messages, but the consumer library discards all events which don't have the tag which you specify when you initialize the consumer (a simple string). This was judged to be more efficient than consumers registering their tags with the queue server.
+Eurybates is a library for producing to and consuming from queues. There is one queue per consumer, and producers write to each consumer's queue, after getting the list of consumer queues from Zookeeper. Each consumer receives all messages, but the consumer library discards all events which don't have the tag which you specify when you initialize the consumer (a simple string). This was judged to be more efficient than consumers somehow registering their tags with the queue server.
 
 At Socrata, we use Eurybates to create a "firehose" of events happening in the platform, which multiple producers produce to and multiple consumers consume from:
 
