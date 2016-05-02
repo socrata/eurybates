@@ -4,19 +4,20 @@
 At the top of the file there should be a short introduction and/ or overview that explains **what** the project is. This description should match descriptions added for package managers (Gemspec, package.json, etc.)
 -->
 
-Eurybates is Socrata's internal Eventing Library.  Currently, Eurybates supports Activemq and Kafka.
-Both are configured via a Properties Object and a client application defined Source ID.
+Eurybates is a library for producing to and consuming from queues. There is one queue per consumer (named `eurybates.<service-name>`), and producers write to each consumer's queue*, after getting the list of consumer queues from Zookeeper. Each consumer receives all messages, but the consumer library discards all events which don't have the tag which you specify when you initialize the consumer (a simple string). This was judged to be more efficient than consumers somehow registering their tags with the queue server.
+
+When a new service which consumes from Eurybates is deployed, its name must be added to Zookeeper under the path `/eurybates/services`. Producers then pick up the new service and start sending to its queue. (See section "Adding a queue to ActiveMQ" below)
+
+At Socrata, we use Eurybates to create a "firehose" of events happening in the platform, which multiple producers produce to and multiple consumers consume from:
+
+![image](diagrams/Eurybates.png)
+
+\* Except `rammstein-synchronisator`, which seems to [just send to its own producer](https://github.com/socrata/rammstein/blob/4e7ca8ebb34d0606a3fcba73735a6f0c689fa855/rammy-synchronisator/src/main/scala/com/socrata/rammstein/eventing/amq/AmqProducer.scala#L34)
+
+Eurybates supports Kafka and ActiveMQ, but as of writing we use it with ActiveMQ at Socrata. It's configured via a properties object and a client-application-defined Source ID.
 
 Note: Currently there have no plans to open source Eurybates and make it publically available.
 
-## Motivation
-
-<!---
-A short description of the motivation behind the creation and maintenance of the project. This should explain **why** the project exists.
--->
-
-To support a fully Asynchronous Event base microservice distributed architecture we require a mechanism to produce and consume messages asynchronously.
-Eurybates is that mechanism.
 
 ## Installation
 
