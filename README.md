@@ -12,7 +12,7 @@ At Socrata, we use Eurybates to create a "firehose" of events happening in the p
 
 ![image](diagrams/Eurybates.png)
 
-\* Except `rammstein-synchronisator`, which seems to [just send to its own producer](https://github.com/socrata/rammstein/blob/4e7ca8ebb34d0606a3fcba73735a6f0c689fa855/rammy-synchronisator/src/main/scala/com/socrata/rammstein/eventing/amq/AmqProducer.scala#L34)
+\* Except `rammstein-synchronisator`, which seems to [just send to its own consumer](https://github.com/socrata/rammstein/blob/4e7ca8ebb34d0606a3fcba73735a6f0c689fa855/rammy-synchronisator/src/main/scala/com/socrata/rammstein/eventing/amq/AmqProducer.scala#L34)
 
 Eurybates supports Kafka and ActiveMQ, but as of writing we use it with ActiveMQ at Socrata. It's configured via a properties object and a client-application-defined Source ID.
 
