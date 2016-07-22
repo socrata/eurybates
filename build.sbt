@@ -9,7 +9,8 @@ import sbt.Keys._
   */
 lazy val commonSettings = Seq(
   organization := "com.socrata",
-  scalaVersion := "2.10.6",
+  scalaVersion := "2.11.8",
+  crossScalaVersions := Seq("2.10.6", "2.11.8"),
   resolvers ++=  Seq(
     socrata_maven,
     socrata_ivy

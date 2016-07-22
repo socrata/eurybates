@@ -3,4 +3,4 @@ resolvers ++= Seq(
   Classpaths.sbtPluginReleases
 )
 
-addSbtPlugin("com.socrata" % "socrata-sbt-plugins" % "1.6.1")
+addSbtPlugin("com.socrata" % "socrata-sbt-plugins" % "1.6.2")

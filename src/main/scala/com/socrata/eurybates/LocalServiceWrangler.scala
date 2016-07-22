@@ -5,8 +5,6 @@ import com.socrata.eurybates.Producer.ProducerType
 import com.socrata.eurybates.Producer.ProducerType
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
 
-import scala.collection.JavaConversions._
-
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Callable
 import java.util.concurrent.LinkedBlockingQueue
