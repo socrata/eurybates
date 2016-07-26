@@ -14,7 +14,7 @@ object Dependencies {
     val rojoma_json = "[3.2.1,4.0.0]"
     val socrata_zookeeper = "0.1.4"
     val scala_test = "2.2.5"
-    val scala_logging = "2.1.2" // Scala Logging version for Scala 2.10 and 2.11
+    val scala_logging = "3.1.0"
   }
 
   object Resolvers {
@@ -31,9 +31,6 @@ object Dependencies {
   val rojoma_json = "com.rojoma" %% "rojoma-json-v3" % versions.rojoma_json
   val socrata_zookeeper = "com.socrata" %% "socrata-zookeeper" % versions.socrata_zookeeper
   val scala_test = "org.scalatest" %% "scalatest" % versions.scala_test % "test"
-
-  // Scala Logging Library for 2.10
-  // scala-logging does not support Scala 2.10
-  val scala_logging = "com.typesafe.scala-logging" %% "scala-logging-slf4j" % versions.scala_logging
+  val scala_logging = "com.typesafe.scala-logging" %% "scala-logging" % versions.scala_logging
 
 }

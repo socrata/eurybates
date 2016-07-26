@@ -11,36 +11,38 @@ import com.socrata.eurybates.multiservice.MultiServiceProducer
 
 import kafka.KafkaServiceProducer
 
+// scalastyle:off magic.number
+// scalastyle:off multiple.string.literals
 
-object multiPlexCheck {
+object MultiPlexCheck {
   val log = new LazyStringLogger(getClass)
 
-  def greetConsumerKafka(label: String) = new Consumer {
+  def greetConsumerKafka(label: String): Consumer = new Consumer {
     val accepts = Set("first", "second")
 
-    def consume(message: Message) {
-      println("Kafka" + label + " received " + message)
+    def consume(message: Message): Unit = {
+      log.info("Kafka" + label + " received " + message)
     }
   }
 
-  def greetServiceKafka(label: String) = new SimpleService(List(greetConsumerKafka(label)))
+  def greetServiceKafka(label: String): SimpleService =
+    new SimpleService(List(greetConsumerKafka(label)))
 
-
-
-  def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable) {
+  def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable): Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
   }
 
-  def greetConsumerAMQP(label: String) = new Consumer {
+  def greetConsumerAMQP(label: String): Consumer = new Consumer {
     val accepts = Set("hello","first","second")
-    def consume(message: Message) { println("AMQP" + label + " received " + message) }
+    def consume(message: Message): Unit = {
+      log.info("AMQP" + label + " received " + message)
+    }
   }
 
-  def greetService(label: String) = new SimpleService(List(greetConsumerAMQP(label),greetConsumerKafka(label)))
+  def greetService(label: String): SimpleService =
+    new SimpleService(List(greetConsumerAMQP(label),greetConsumerKafka(label)))
 
-
-
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     val executor = java.util.concurrent.Executors.newCachedThreadPool()
 
     val zkp = new ZooKeeperProvider("localhost:2181", 20000, executor)
@@ -49,14 +51,11 @@ object multiPlexCheck {
     val conn = connFactory.createConnection()
     conn.start()
 
-
-
     val producerAMQP = new ActiveMQServiceProducer(conn, "hello!", true)
     producerAMQP.start()
 
     val config = new ServiceConfiguration(zkp, executor, producerAMQP.setServiceNames)
     config.start().foreach(config.destroyService)
-
     config.registerService("first")
     config.registerService("second")
 
@@ -79,12 +78,11 @@ object multiPlexCheck {
                            Map("first" -> greetService("a"), "second" -> greetService("b")))
     consumerampq.start()
 
-
-    for (i <- 0 until 100) {
+    (0 until 100).foreach(_ => {
       multiplexer.send(Message("first", JNull))
       multiplexer.send(Message("second", JNull))
       Thread.sleep(100)
-    }
+    })
 
     Thread.sleep(1000)
     producerAMQP.stop()
@@ -94,7 +92,4 @@ object multiPlexCheck {
     conn.close()
     executor.shutdown()
   }
-
-
-
 }
