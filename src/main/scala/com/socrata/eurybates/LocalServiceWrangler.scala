@@ -2,20 +2,19 @@ package com.socrata
 package eurybates
 
 import com.socrata.eurybates.Producer.ProducerType
-import com.socrata.eurybates.Producer.ProducerType
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
-
-import scala.collection.JavaConversions._
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Callable
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ExecutionException
 
-class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceName, Message, Throwable) => Unit, services: Map[ServiceName, Service]) extends Producer {
+class LocalServiceWrangler(executor: ExecutorService,
+                           handlingLogger: (ServiceName, Message, Throwable) => Unit,
+                           services: Map[ServiceName, Service]) extends Producer {
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
 
-  def send(msg: Message) {
+  def send(msg: Message): Unit = {
     val forcedDetails = msg.details.forced
     val forcedMsg = msg.copy(details = forcedDetails)
 
@@ -23,7 +22,11 @@ class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceNa
     // on the composite queue atomically, this does not need to be
     // synchronized.  But I don't know whether or not it does.
     synchronized {
-      for(worker <- workers) worker.queue.add(forcedMsg)
+      for {
+        worker <- workers
+      } yield {
+        worker.queue.add(forcedMsg)
+      }
     }
   }
 
@@ -31,11 +34,11 @@ class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceNa
     Seq(ProducerType.LocalService)
   }
 
-  def start() = synchronized {
+  def start(): Unit = synchronized {
     workers.foreach(_.start())
   }
 
-  def stop() = synchronized {
+  def stop(): Unit = synchronized {
     workers.foreach(_.interrupt())
     workers.foreach(_.join())
   }
@@ -45,7 +48,7 @@ class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceNa
 
     setName(getId() + " / Eurybates service " + serviceName)
 
-    override def run() {
+    override def run(): Unit = {
       try {
         while(!isInterrupted) {
           val msg = queue.take()
@@ -56,7 +59,7 @@ class LocalServiceWrangler(executor: ExecutorService, handlingLogger: (ServiceNa
           // guarantee that this loop will terminate.
 
           val result = executor.submit(new Callable[Unit] {
-            def call() { service.messageReceived(msg) }
+            def call(): Unit = { service.messageReceived(msg) }
           })
           try {
             result.get()

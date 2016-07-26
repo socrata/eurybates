@@ -43,13 +43,13 @@ object Producer {
 trait Producer extends LazyLogging {
   private val log = new LazyStringLogger(getClass)
 
-  def start()
+  def start(): Unit
 
-  def stop()
+  def stop(): Unit
 
   def supportedProducerTypes() : Seq[ProducerType]
 
-  def send(message: eurybates.Message)
+  def send(message: eurybates.Message): Unit
 
   def send(message: eurybates.Message, producerType: ProducerType) : Unit = {
     if(supportedProducerTypes().contains(producerType)){
@@ -60,7 +60,7 @@ trait Producer extends LazyLogging {
   }
 
   def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
-    //Default is noop
+    // Default is noop
     log.info("No Op : Not Setting service names")
   }
 
