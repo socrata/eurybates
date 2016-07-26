@@ -14,7 +14,13 @@ lazy val commonSettings = Seq(
     socrata_maven,
     socrata_ivy
   ),
-  scalastyleFailOnError in Compile := false
+  scalastyleFailOnError in Compile := true,
+  assemblyMergeStrategy in assembly := {
+    case "META-INF/spring.tooling" | "overview.html" => MergeStrategy.last
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  }
 )
 
 lazy val eurybates = (project in file(".")).

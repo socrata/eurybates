@@ -2,19 +2,21 @@ package com.socrata
 package eurybates
 package kafka
 
-import java.nio.charset.{StandardCharsets}
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ExecutorService
 import java.util.Properties
+
 import com.socrata.eurybates.Producer.ProducerType
 import util.logging.LazyStringLogger
-import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord, KafkaConsumer, Consumer}
-import eurybates.{MessageCodec, ServiceName, Service, Message}
-
+import org.apache.kafka.clients.consumer.{Consumer, ConsumerConfig, ConsumerRecord, KafkaConsumer}
+import eurybates.{Message, MessageCodec, Service, ServiceName}
 import com.rojoma.json.v3.io.JsonReaderException
 import com.rojoma.json.v3.util.JsonUtil
 import com.rojoma.json.v3.codec.DecodeError.InvalidValue
 import com.rojoma.json.v3.ast.JString
 import com.rojoma.json.v3.codec.Path
+import com.socrata.eurybates.Producer.ProducerType.ProducerType
+
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
@@ -26,14 +28,18 @@ import scala.collection.JavaConverters._
   * @param handlingLogger UNUSED
   * @param services Services used to handle messages from a topic.
   */
-class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: ExecutorService, handlingLogger: (ServiceName, String, Throwable) => Unit, services: Map[ServiceName, Service])
-  extends MessageCodec(sourceId)
-{
+class KafkaServiceConsumer(brokerList: String,
+                           sourceId: String,
+                           executor: ExecutorService,
+                           handlingLogger: (ServiceName, String, Throwable) => Unit,
+                           services: Map[ServiceName, Service]
+                          ) extends MessageCodec(sourceId) {
+
   val log = new LazyStringLogger(getClass)
 
-  var consumers: Iterable[Consumer[Array[Byte],Array[Byte]]] = Seq[Consumer[Array[Byte],Array[Byte]]]()
+  var consumers: Iterable[Consumer[Array[Byte], Array[Byte]]] = Seq[Consumer[Array[Byte], Array[Byte]]]()
 
-  def start() = synchronized {
+  def start(): Unit = synchronized {
     log.info("Starting kafka consumer with brokers: " + brokerList)
 
     val props = new Properties
@@ -47,7 +53,7 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
         val serviceProps = new Properties(props)
         serviceProps.put(ConsumerConfig.GROUP_ID_CONFIG, serviceName)
 
-        val consumer = new KafkaConsumer[Array[Byte],Array[Byte]](serviceProps)
+        val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](serviceProps)
 
         consumer.subscribe(Name)
 
@@ -62,7 +68,7 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
     }
   }
 
-  def pollAndProcess(consumer: Consumer[Array[Byte],Array[Byte]], service: Service) = {
+  def pollAndProcess(consumer: Consumer[Array[Byte], Array[Byte]], service: Service): (() => Unit) = {
     new (() => Unit) {
       @tailrec
       def apply(): Unit = {
@@ -70,7 +76,9 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
 
         val eurybatesMessages = polled.get(Name)
 
-        for (record: ConsumerRecord[Array[Byte],Array[Byte]] <- eurybatesMessages.records().asScala.toList) {
+        for {
+          record: ConsumerRecord[Array[Byte], Array[Byte]] <- eurybatesMessages.records().asScala.toList
+        } yield {
           val message = new String(record.value(), StandardCharsets.UTF_8)
 
           val msg = try {
@@ -90,25 +98,18 @@ class KafkaServiceConsumer(brokerList: String, sourceId: String, executor: Execu
 
         apply()
       }
-
-  }
-}
-
-  def stop() = synchronized {
-    log.info("Stopping consumers and threads")
-    for(consumer: Consumer[Array[Byte],Array[Byte]] <- consumers) {
-      consumer.close()
     }
+  }
+
+  def stop(): Unit = synchronized {
+    log.info("Stopping consumers and threads")
+    consumers.foreach(_.close())
 
     executor.shutdownNow
     log.info("Successfully stopped consumers and threads")
   }
 
-  def close() = synchronized {
+  def close(): Unit = synchronized {}
 
-  }
-
-  def supportedProducerTypes() = {
-    Seq(ProducerType.Kafka)
-  }
+  def supportedProducerTypes: Seq[ProducerType] = Seq(ProducerType.Kafka)
 }
