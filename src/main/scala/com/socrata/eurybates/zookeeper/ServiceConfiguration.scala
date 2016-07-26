@@ -2,36 +2,40 @@ package com.socrata
 package eurybates
 package zookeeper
 
-import com.socrata.util.error
 import com.socrata.zookeeper._
-import com.socrata.zookeeper.results.Create.OK
 import com.socrata.zookeeper.results._
 
 import java.util.concurrent.Executor
 
 import scala.annotation.tailrec
-import scala.util.{Success, Try}
 
-//TODO: Remove ZooKeeper dependency
+// TODO: Remove ZooKeeper dependency
 class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnChanges: Set[ServiceName] => Unit) {
+
   final def start(): Traversable[ServiceName] = synchronized {
-    while(true) {
-      implicit val zk = zkp.get()
-      zk.children(root, watcher) match {
-        case Children.OK(cs, _) =>
-          return cs
-        case NotFound =>
-          zk.createPath(root)
-        case ConnectionLost =>
-          zk.waitUntilConnected()
-        case SessionExpired =>
-      }
+    startHelper()
+  }
+
+  // This helper is needed because synchronized methods cannot be recursive
+  // Must be synchronized before use
+  @tailrec private def startHelper(): Traversable[ServiceName] = {
+    implicit val zk = zkp.get()
+    zk.children(root, watcher) match {
+      case Children.OK(cs, _) =>
+        cs
+      case NotFound =>
+        zk.createPath(root)
+        startHelper()
+      case ConnectionLost =>
+        zk.waitUntilConnected()
+        startHelper()
+      case SessionExpired =>
+        startHelper()
     }
-    error("Can't get here")
   }
 
   private val watcher = new Watcher {
-    def process(event: WatchedEvent) {
+    def process(event: WatchedEvent): Unit = {
       scheduleUpdate()
     }
   }
@@ -40,14 +44,14 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
 
   private def path(service: ServiceName) = root + "/" + service
 
-  private val DEFAULT_ZOOKEEPER_RETRIES = 5
+  private val DefaultZookeeperRetries = 5
 
   final def registerService(name: ServiceName): Unit = {
-    this.registerService(name, DEFAULT_ZOOKEEPER_RETRIES)
+    this.registerService(name, DefaultZookeeperRetries)
   }
 
   @tailrec
-  final def registerService(name: ServiceName, attempts: Int = DEFAULT_ZOOKEEPER_RETRIES): Unit = {
+  final def registerService(name: ServiceName, attempts: Int = DefaultZookeeperRetries): Unit = {
     attempts match {
       case i: Int if i < 0 => throw new IllegalStateException("Could not register service in zookeeper")
       case i: Int =>
@@ -66,11 +70,11 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
   }
 
   final def destroyService(name: ServiceName): Unit = {
-    this.destroyService(name, DEFAULT_ZOOKEEPER_RETRIES)
+    this.destroyService(name, DefaultZookeeperRetries)
   }
 
   @tailrec
-  final def destroyService(name: ServiceName, attempts: Int = DEFAULT_ZOOKEEPER_RETRIES): Unit = {
+  final def destroyService(name: ServiceName, attempts: Int = DefaultZookeeperRetries): Unit = {
     attempts match {
       case i: Int if i < 0 => throw new IllegalStateException("Could not delete service from zookeeper")
       case i: Int =>
@@ -90,13 +94,15 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
     }
   }
 
-  private def scheduleUpdate() : Unit = {
+  private def scheduleUpdate(): Unit = {
     executor.execute(new Runnable() {
-      def run() { updateServiceConfiguration() }
+      def run(): Unit = {
+        updateServiceConfiguration()
+      }
     })
   }
 
-  private def updateServiceConfiguration() = {
+  private def updateServiceConfiguration(): Unit = {
     synchronized {
       val zk = zkp.get()
 

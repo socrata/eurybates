@@ -8,15 +8,16 @@ import com.socrata.util.logging.LazyStringLogger
 
 case class NoopProducer(sourceId: String) extends MessageCodec(sourceId) with Producer {
   val log = new LazyStringLogger(getClass)
-  var message : Message = null
+  var message : Option[Message] = None
 
-  def send(msg: Message) {
-    message = msg
-    log.info("Received request to send message: " + JsonUtil.renderJson(msg, true))
+  def send(msg: Message): Unit = {
+    message = Option(msg)
+    message.foreach(someMessage =>
+      log.info("Received request to send message: " + JsonUtil.renderJson(someMessage, true)))
   }
 
-  def start = {}
-  def stop = {}
+  def start: Unit = {}
+  def stop: Unit = {}
 
   def supportedProducerTypes(): Seq[ProducerType] = {
     Seq(ProducerType.NoOp)
