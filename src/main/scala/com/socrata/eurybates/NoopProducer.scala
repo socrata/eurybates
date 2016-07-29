@@ -12,8 +12,8 @@ case class NoopProducer(sourceId: String) extends MessageCodec(sourceId) with Pr
 
   def send(msg: Message): Unit = {
     message = Option(msg)
-    message.foreach(someMessage =>
-      log.info("Received request to send message: " + JsonUtil.renderJson(someMessage, true)))
+
+    message.foreach { m => log.debug("Received request to send message: " + JsonUtil.renderJson(m, true)) }
   }
 
   def start: Unit = {}
