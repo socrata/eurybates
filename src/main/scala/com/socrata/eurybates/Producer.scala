@@ -8,7 +8,7 @@ import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
 import com.socrata.util.logging.LazyStringLogger
-import com.typesafe.scalalogging.LazyLogging
+import org.slf4j.LoggerFactory
 
 /** A Producer accepts messages from user code and routes them to a topic.
   *
@@ -40,8 +40,8 @@ object Producer {
   }
 }
 
-trait Producer extends LazyLogging {
-  private val log = new LazyStringLogger(getClass)
+trait Producer {
+  private val log = LoggerFactory.getLogger(classOf[Producer])
 
   def start(): Unit
 
