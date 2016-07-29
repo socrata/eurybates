@@ -14,7 +14,7 @@ object Dependencies {
     val rojoma_json = "[3.2.1,4.0.0]"
     val socrata_zookeeper = "0.1.4"
     val scala_test = "2.2.5"
-    val scala_logging = "3.1.0"
+    val slf4j = "1.7.21"
   }
 
   object Resolvers {
@@ -31,6 +31,6 @@ object Dependencies {
   val rojoma_json = "com.rojoma" %% "rojoma-json-v3" % versions.rojoma_json
   val socrata_zookeeper = "com.socrata" %% "socrata-zookeeper" % versions.socrata_zookeeper
   val scala_test = "org.scalatest" %% "scalatest" % versions.scala_test % "test"
-  val scala_logging = "com.typesafe.scala-logging" %% "scala-logging" % versions.scala_logging
+  val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
 
 }

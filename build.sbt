@@ -10,6 +10,7 @@ import sbt.Keys._
 lazy val commonSettings = Seq(
   organization := "com.socrata",
   scalaVersion := "2.11.8",
+  crossScalaVersions := Seq("2.10.6", scalaVersion.value),
   resolvers ++=  Seq(
     socrata_maven,
     socrata_ivy
@@ -33,7 +34,7 @@ lazy val eurybates = (project in file(".")).
       rojoma_json,
       socrata_zookeeper,
       scala_test,
-      scala_logging
+      slf4j
     )
   )
 
