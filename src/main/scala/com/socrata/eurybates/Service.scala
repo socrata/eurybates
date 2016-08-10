@@ -18,12 +18,12 @@ class SimpleService(consumers: Traversable[Consumer]) extends Service {
     }
 
   def messageReceived(message: Message): Unit = {
-    log.info("Received " + message.tag)
+    log.debug("Received " + message.tag)
     routing(message.tag).foreach(consumer => {
-      log.info("Consuming using " + consumer.name)
+      log.info(s"Consuming ${message.tag} using ${consumer.name}")
       consumer.consume(message)
     })
-    log.info("Finished processing " + message.tag)
+    log.debug("Finished processing " + message.tag)
   }
 }
 
