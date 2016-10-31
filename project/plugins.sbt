@@ -1,5 +1,5 @@
 resolvers ++= Seq(
-  "socrata releases" at "https://repository-socrata-oss.forge.cloudbees.com/release",
+  "socrata releases" at "https://repo.socrata.com/artifactory/libs-release",
   Classpaths.sbtPluginReleases
 )
 
