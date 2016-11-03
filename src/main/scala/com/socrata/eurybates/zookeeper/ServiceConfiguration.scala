@@ -10,7 +10,10 @@ import java.util.concurrent.Executor
 import scala.annotation.tailrec
 
 // TODO: Remove ZooKeeper dependency
-class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnChanges: Set[ServiceName] => Unit) {
+class ServiceConfiguration(zkp: ZooKeeperProvider,
+                           zkpRootPath: String,
+                           executor: Executor,
+                           notifyOnChanges: Set[ServiceName] => Unit) {
 
   final def start(): Traversable[ServiceName] = synchronized {
     startHelper()
@@ -40,7 +43,7 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
     }
   }
 
-  private val root = "/eurybates/services"
+  private val root = zkpRootPath + "/services"
 
   private def path(service: ServiceName) = root + "/" + service
 
