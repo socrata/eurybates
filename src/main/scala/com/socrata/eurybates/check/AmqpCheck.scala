@@ -29,6 +29,7 @@ object AmqpCheck {
     val executor = java.util.concurrent.Executors.newCachedThreadPool()
 
     val zkp = new ZooKeeperProvider("mike.local:2181", 20000, executor)
+    val zkpRootPath = "/eurybates"
     val connFactory = new org.apache.activemq.ActiveMQConnectionFactory("failover:(tcp://mike.local:61616)")
     val conn = connFactory.createConnection()
     conn.start()
@@ -36,7 +37,7 @@ object AmqpCheck {
     val producer = new ActiveMQServiceProducer(conn, "hello!", true)
     producer.start()
 
-    val config = new ServiceConfiguration(zkp, executor, producer.setServiceNames)
+    val config = new ServiceConfiguration(zkp, zkpRootPath, executor, producer.setServiceNames)
     config.start().foreach(config.destroyService)
 
     val consumer = new ActiveMQServiceConsumer(
