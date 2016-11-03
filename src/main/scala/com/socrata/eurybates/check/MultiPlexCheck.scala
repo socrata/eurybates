@@ -46,6 +46,7 @@ object MultiPlexCheck {
     val executor = java.util.concurrent.Executors.newCachedThreadPool()
 
     val zkp = new ZooKeeperProvider("localhost:2181", 20000, executor)
+    val zkpRootPath = "/eurybates"
     val connFactory = new org.apache.activemq.ActiveMQConnectionFactory("failover:(tcp://localhost:61616)")
 
     val conn = connFactory.createConnection()
@@ -54,7 +55,7 @@ object MultiPlexCheck {
     val producerAMQP = new ActiveMQServiceProducer(conn, "hello!", true)
     producerAMQP.start()
 
-    val config = new ServiceConfiguration(zkp, executor, producerAMQP.setServiceNames)
+    val config = new ServiceConfiguration(zkp, zkpRootPath, executor, producerAMQP.setServiceNames)
     config.start().foreach(config.destroyService)
     config.registerService("first")
     config.registerService("second")
