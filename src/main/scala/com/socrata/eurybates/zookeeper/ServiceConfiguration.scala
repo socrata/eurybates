@@ -9,10 +9,14 @@ import java.util.concurrent.Executor
 
 import scala.annotation.tailrec
 
+import org.slf4j.LoggerFactory
+
 // TODO: Remove ZooKeeper dependency
 class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnChanges: Set[ServiceName] => Unit) {
+  private val log = LoggerFactory.getLogger(classOf[ServiceConfiguration])
 
   final def start(): Traversable[ServiceName] = synchronized {
+    log.info("Starting zookeeper ServiceConfiguration")
     startHelper()
   }
 
@@ -22,8 +26,10 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
     implicit val zk = zkp.get()
     zk.children(root, watcher) match {
       case Children.OK(cs, _) =>
+        scheduleUpdate()
         cs
       case NotFound =>
+        log.info("Root not found, creating...")
         zk.createPath(root)
         startHelper()
       case ConnectionLost =>
@@ -95,6 +101,7 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
   }
 
   private def scheduleUpdate(): Unit = {
+    log.info("Scheduling config update.")
     executor.execute(new Runnable() {
       def run(): Unit = {
         updateServiceConfiguration()
@@ -103,17 +110,20 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
   }
 
   private def updateServiceConfiguration(): Unit = {
+    log.info("Updating config.")
     synchronized {
       val zk = zkp.get()
 
       zk.children(root, watcher) match {
         case Children.OK(cs, _) =>
+          log.info("Got new services: {}", cs)
           notifyOnChanges(cs)
         case NotFound =>
           zk.exists(root, watcher) match {
             case Exists.OK(Some(_)) =>
               scheduleUpdate()
             case Exists.OK(None) =>
+              log.info("No entries found")
               notifyOnChanges(Set.empty)
             case ConnectionLost =>
               zk.waitUntilConnected()
