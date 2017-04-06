@@ -22,13 +22,9 @@ Eurybates supports Kafka and ActiveMQ, but as of writing we use it with ActiveMQ
 <!---
 Provide code examples and explanations of how to get the project.
 -->
-
-Currently we only support using Eurybates as a Maven/Ivy Dependency that is hosted in artifactory and therefore can only be
-  referenced internally within Socrata.
-
 To include Eurybates in your SBT Project
 
-Ensure you have the Socrata Artifactory Resolver added the list of resolvers
+Ensure you have the Socrata CloudBees Resolver added the list of resolvers
 
 ```
 resolvers ++= Seq(

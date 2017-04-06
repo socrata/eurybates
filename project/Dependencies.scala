@@ -17,11 +17,6 @@ object Dependencies {
     val slf4j = "1.7.21"
   }
 
-  object Resolvers {
-    val socrata_maven = "socrata maven" at "https://repo.socrata.com/artifactory/libs-release"
-    val socrata_ivy = Resolver.url("socrata ivy", new URL("https://repo.socrata.com/artifactory/ivy-libs-release"))(Resolver.ivyStylePatterns)
-  }
-
   ////////////////////////////////////////////////////////////////////////////////
   // Library Dependencies for all sub projects
   ////////////////////////////////////////////////////////////////////////////////
