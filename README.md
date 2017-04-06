@@ -16,8 +16,6 @@ At Socrata, we use Eurybates to create a "firehose" of events happening in the p
 
 Eurybates supports Kafka and ActiveMQ, but as of writing we use it with ActiveMQ at Socrata. It's configured via a properties object and a client-application-defined Source ID.
 
-Note: Currently there have no plans to open source Eurybates and make it publically available.
-
 
 ## Installation
 
