@@ -195,4 +195,4 @@ Socrata Engineering Members
 A short snippet describing the license (MIT, Apache, etc.)
 -->
 
-???
+Apache Version 2.0 License
