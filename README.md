@@ -8,15 +8,7 @@ Eurybates is a library for producing to and consuming from queues. There is one 
 
 When a new service which consumes from Eurybates is deployed, its name must be added to Zookeeper under the path `/eurybates/services`. Producers then pick up the new service and start sending to its queue. (See section "Adding a queue to ActiveMQ" below)
 
-At Socrata, we use Eurybates to create a "firehose" of events happening in the platform, which multiple producers produce to and multiple consumers consume from:
-
-![image](diagrams/Eurybates.png)
-
-\* Except `rammstein-synchronisator`, which seems to [just send to its own consumer](https://github.com/socrata/rammstein/blob/4e7ca8ebb34d0606a3fcba73735a6f0c689fa855/rammy-synchronisator/src/main/scala/com/socrata/rammstein/eventing/amq/AmqProducer.scala#L34)
-
 Eurybates supports Kafka and ActiveMQ, but as of writing we use it with ActiveMQ at Socrata. It's configured via a properties object and a client-application-defined Source ID.
-
-Note: Currently there have no plans to open source Eurybates and make it publically available.
 
 
 ## Installation
@@ -24,13 +16,9 @@ Note: Currently there have no plans to open source Eurybates and make it publica
 <!---
 Provide code examples and explanations of how to get the project.
 -->
-
-Currently we only support using Eurybates as a Maven/Ivy Dependency that is hosted in artifactory and therefore can only be
-  referenced internally within Socrata.
-
 To include Eurybates in your SBT Project
 
-Ensure you have the Socrata Artifactory Resolver added the list of resolvers
+Ensure you have the Socrata CloudBees Resolver added the list of resolvers
 
 ```
 resolvers ++= Seq(
@@ -201,4 +189,4 @@ Socrata Engineering Members
 A short snippet describing the license (MIT, Apache, etc.)
 -->
 
-???
+Apache Version 2.0 License

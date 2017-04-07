@@ -1,4 +1,3 @@
-import Dependencies.Resolvers._
 import Dependencies._
 import sbt.Keys._
 
@@ -11,10 +10,6 @@ lazy val commonSettings = Seq(
   organization := "com.socrata",
   scalaVersion := "2.11.8",
   crossScalaVersions := Seq("2.10.6", scalaVersion.value),
-  resolvers ++=  Seq(
-    socrata_maven,
-    socrata_ivy
-  ),
   scalastyleFailOnError in Compile := true,
   assemblyMergeStrategy in assembly := {
     case "META-INF/spring.tooling" | "overview.html" => MergeStrategy.last
@@ -35,14 +30,7 @@ lazy val eurybates = (project in file(".")).
       socrata_zookeeper,
       scala_test,
       slf4j
-    ),
-    publishTo := {
-      val nexus = "https://repo.socrata.com/artifactory/"
-      if (isSnapshot.value)
-        Some("snapshots" at nexus + "libs-snapshot-local")
-      else
-        Some("releases" at nexus + "libs-release-local")
-    }
+    )
   )
 
 
