@@ -78,20 +78,18 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
       }
     }
 
-    @tailrec private def nextMessage(): javax.jms.Message = {
-      var sleepTime = InitialSleepTime
+    @tailrec private def nextMessage(sleepTime: Long = InitialSleepTime): javax.jms.Message = {
       val sleepMax = SleepTimeMaximum
 
       try {
         consumer.receive()
       } catch {
-        case _: javax.jms.IllegalStateException =>
-          nextMessage() // it was closed on this side
+        case _: javax.jms.IllegalStateException =>  // this generally means the consumer is shutting down
+          null // scalastyle:ignore null
         case e: JMSException => // hmmmmm
           log.error("Unexpected JMS exception; sleeping and retrying", e)
           Thread.sleep(sleepTime)
-          sleepTime = sleepMax.max(sleepTime * 2)
-          nextMessage()
+          nextMessage(sleepMax.max(sleepTime * 2))
       }
     }
 
