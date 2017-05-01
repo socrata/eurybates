@@ -22,7 +22,7 @@ Ensure you have the Socrata CloudBees Resolver added the list of resolvers
 
 ```
 resolvers ++= Seq(
-    "socrata maven" at "https://repository-socrata-oss.forge.cloudbees.com/release"
+    "socrata maven" at "https://repo.socrata.com/artifactory/libs-release"
 )
 ```
 
