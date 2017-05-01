@@ -89,7 +89,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
         case e: JMSException => // hmmmmm
           log.error("Unexpected JMS exception; sleeping and retrying", e)
           Thread.sleep(sleepTime)
-          nextMessage(sleepMax.max(sleepTime * 2))
+          nextMessage(Math.min(sleepMax, sleepTime * 2))
       }
     }
 
