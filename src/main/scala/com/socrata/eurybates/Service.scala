@@ -12,8 +12,8 @@ class SimpleService(consumers: Traversable[Consumer]) extends Service {
 
   private val routing: Map[Tag, List[Consumer]] =
     consumers.foldLeft(Map.empty[Tag, List[Consumer]].withDefault(_ => Nil)) { (acc, consumer) =>
-      consumer.accepts.foldLeft(acc) { (acc, tag) =>
-        acc + (tag -> (consumer :: acc(tag)))
+      consumer.accepts.foldLeft(acc) { (acc: Map[Tag, List[Consumer]], tag: (Tag, Option[SerialVersionUID])) =>
+        acc + (tag._1 -> (consumer :: acc(tag._1)))
       }
     }
 

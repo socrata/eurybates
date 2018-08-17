@@ -25,7 +25,7 @@ object KafkaCheck {
   }
 
   def greetService(label: String): SimpleService =
-    new SimpleService(List(new GreetConsumer(label) with Spyer))
+    new SimpleService(List(new GreetConsumer(label) with Spyer with LoggingVersionedConsumer))
 
   def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable): Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
