@@ -16,17 +16,7 @@ Eurybates supports Kafka and ActiveMQ, but as of writing we use it with ActiveMQ
 <!---
 Provide code examples and explanations of how to get the project.
 -->
-To include Eurybates in your SBT Project
-
-Ensure you have the Socrata CloudBees Resolver added the list of resolvers
-
-```
-resolvers ++= Seq(
-    "socrata maven" at "https://repository-socrata-oss.forge.cloudbees.com/release"
-)
-```
-
-Then add Eurybates to your list of library dependencies
+Add Eurybates to your list of library dependencies
 
 ```
 libraryDependencies ++= Seq(
