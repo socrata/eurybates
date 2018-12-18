@@ -16,7 +16,8 @@ lazy val commonSettings = Seq(
     case x =>
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
-  }
+  },
+  resolvers += "socrata" at "https://repo.socrata.com/artifactory/libs-release"
 )
 
 lazy val eurybates = (project in file(".")).

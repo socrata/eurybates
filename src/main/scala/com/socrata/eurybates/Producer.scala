@@ -7,7 +7,6 @@ import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
-import com.socrata.util.logging.LazyStringLogger
 import org.slf4j.LoggerFactory
 
 /** A Producer accepts messages from user code and routes them to a topic.
