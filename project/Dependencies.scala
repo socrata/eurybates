@@ -9,7 +9,7 @@ object Dependencies {
     * Version numbers.
     */
   private object versions {
-    val activemq = "5.15.10"
+    val activemq = "5.7.0"
     val kafka_clients = "0.8.2.1"
     val rojoma_json = "[3.2.1,4.0.0]"
     val socrata_zookeeper = "1.0.1"
@@ -21,7 +21,7 @@ object Dependencies {
   // Library Dependencies for all sub projects
   ////////////////////////////////////////////////////////////////////////////////
 
-  val activemq = "org.apache.activemq" % "activemq-broker" % versions.activemq % "optional"
+  val activemq = "org.apache.activemq" % "activemq-core" % versions.activemq % "optional"
   val kafka_clients = "org.apache.kafka" % "kafka-clients" % versions.kafka_clients % "optional"
   val rojoma_json = "com.rojoma" %% "rojoma-json-v3" % versions.rojoma_json
   val socrata_zookeeper = "com.socrata" %% "socrata-zookeeper" % versions.socrata_zookeeper
