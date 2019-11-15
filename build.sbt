@@ -24,6 +24,7 @@ lazy val eurybates = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "eurybates",
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
     libraryDependencies ++= Seq(
       activemq,
       kafka_clients,
