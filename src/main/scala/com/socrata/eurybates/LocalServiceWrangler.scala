@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException
 
 class LocalServiceWrangler(executor: ExecutorService,
                            handlingLogger: (ServiceName, Envelope, Throwable) => Unit,
-                           services: Map[ServiceName, Service]) extends Producer {
+                           services: Map[ServiceName, Consumer]) extends Producer {
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
 
   def send(msg: Envelope): Unit = {
@@ -43,7 +43,7 @@ class LocalServiceWrangler(executor: ExecutorService,
     workers.foreach(_.join())
   }
 
-  private class ServiceProcess(serviceName: ServiceName, service: Service) extends Thread {
+  private class ServiceProcess(serviceName: ServiceName, service: Consumer) extends Thread {
     val queue = new LinkedBlockingQueue[Envelope]
 
     setName(getId() + " / Eurybates service " + serviceName)
@@ -59,7 +59,7 @@ class LocalServiceWrangler(executor: ExecutorService,
           // guarantee that this loop will terminate.
 
           val result = executor.submit(new Callable[Unit] {
-            def call(): Unit = { service.messageReceived(msg) }
+            def call(): Unit = { service.consume(msg) }
           })
           try {
             result.get()

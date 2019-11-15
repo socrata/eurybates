@@ -16,8 +16,6 @@ object AmqpCheck {
       consuming[CheckMessage.Hello.Message.type] { _ => log.info(label + " received hello") }.
       build()
 
-  def greetService(label: String) : SimpleService = new SimpleService(List(greetConsumer(label)))
-
   def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable) : Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
   }
@@ -42,8 +40,8 @@ object AmqpCheck {
       executor,
       onUnexpectedException,
       Map(
-        "first" -> greetService("a"),
-        "second" -> greetService("b")
+        "first" -> greetConsumer("a"),
+        "second" -> greetConsumer("b")
       )
     )
 

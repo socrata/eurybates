@@ -14,20 +14,18 @@ object KafkaCheck {
   object First extends CheckMessage("first")
   object Second extends CheckMessage("second")
 
-  def greetConsumer(label: String): Consumer =
-    Consumer.Builder.
-      consuming[First.Message.type] { _ => log.info(label + " received first!") }.
-      consuming[Second.Message.type] { _ => log.info(label + " received second!") }.
-      build()
-
   class Spyer(underlying: Consumer) extends Spying(underlying) {
     def spy(message: Envelope): Unit = {
       log.info("Spied" + message.details)
     }
   }
 
-  def greetService(label: String): SimpleService =
-    new SimpleService(List(new Spyer(greetConsumer(label))))
+  def greetConsumer(label: String): Consumer =
+    new Spyer(
+      Consumer.Builder.
+        consuming[First.Message.type] { _ => log.info(label + " received first!") }.
+        consuming[Second.Message.type] { _ => log.info(label + " received second!") }.
+        build())
 
   def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable): Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
@@ -49,8 +47,8 @@ object KafkaCheck {
       executor,
       onUnexpectedException,
       Map(
-        "first" -> greetService("a"),
-        "second" -> greetService("b")
+        "first" -> greetConsumer("a"),
+        "second" -> greetConsumer("b")
       )
     )
     consumer.start()

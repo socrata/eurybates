@@ -27,7 +27,7 @@ case class AMQRollbackMessageException(msg: String) extends Exception(msg)
 
 class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService,
                               handlingLogger: (ServiceName, String, Throwable) => Unit,
-                              services: Map[ServiceName, Service]) extends EnvelopeCodec(sourceId) with QueueUtil {
+                              services: Map[ServiceName, Consumer]) extends EnvelopeCodec(sourceId) with QueueUtil {
   val log = new LazyStringLogger(getClass)
 
 
@@ -44,7 +44,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
     workers.foreach(_.join())
   }
 
-  private class ServiceProcess(serviceName: ServiceName, service: Service) extends Thread {
+  private class ServiceProcess(serviceName: ServiceName, service: Consumer) extends Thread {
     val transactional = sessionMode match {
       case SessionMode.Transacted => true
       case SessionMode.None => false
@@ -149,7 +149,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
             msg match {
               case Right(m) =>
                 try {
-                  service.messageReceived(m)
+                  service.consume(m)
                   commit()
                 } catch {
                   case _: AMQRollbackMessageException => rollback()
