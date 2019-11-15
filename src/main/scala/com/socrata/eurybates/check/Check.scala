@@ -3,7 +3,6 @@ package com.socrata.eurybates.check
 import com.socrata.eurybates.activemq.{ActiveMQServiceProducer, ActiveMQServiceConsumer}
 import com.socrata.zookeeper.ZooKeeperProvider
 import com.socrata.eurybates.zookeeper.ServiceConfiguration
-import com.rojoma.json.v3.ast.JNull
 import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
 
@@ -12,12 +11,10 @@ import com.socrata.eurybates._
 object Check {
   val log = new LazyStringLogger(getClass)
 
-  def greetConsumer(label: String): Consumer = new Consumer {
-    val accepts = Set("hello")
-    def consume(message: Message): Unit = {
-      log.info(label + " received " + message)
-    }
-  }
+  def greetConsumer(label: String): Consumer =
+    Consumer.Builder.
+      consuming[CheckMessage.Hello.Message.type] { _ => log.info(label + " received hello") }.
+      build()
 
   def greetService(label: String): SimpleService =
     new SimpleService(List(greetConsumer(label)))
@@ -56,7 +53,7 @@ object Check {
     for {
       i <- 0 until 100
     } yield {
-      producer.send(Message("hello", JNull))
+      producer.send(CheckMessage.Hello.Message)
       if (i == 30) {
         config.registerService("first")
       } else if (i == 60) {

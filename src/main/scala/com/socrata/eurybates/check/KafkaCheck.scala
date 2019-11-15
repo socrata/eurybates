@@ -1,31 +1,33 @@
 package com.socrata.eurybates.check
 
 import com.socrata.zookeeper.ZooKeeperProvider
-import com.rojoma.json.v3.ast.JNull
 import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
 import com.socrata.eurybates.kafka.{KafkaServiceConsumer, KafkaServiceProducer}
+import com.socrata.eurybates.message.Envelope
 
 // scalastyle:off magic.number
 
 object KafkaCheck {
   val log = new LazyStringLogger(getClass)
 
-   class GreetConsumer(label: String) extends Consumer {
-    val accepts = Set("first", "second")
-    def consume(message: Message): Unit = {
-      log.info(label + " received " + message)
-    }
-  }
+  object First extends CheckMessage("first")
+  object Second extends CheckMessage("second")
 
-  trait Spyer extends Spying {
-    def spy(message:Message): Unit = {
+  def greetConsumer(label: String): Consumer =
+    Consumer.Builder.
+      consuming[First.Message.type] { _ => log.info(label + " received first!") }.
+      consuming[Second.Message.type] { _ => log.info(label + " received second!") }.
+      build()
+
+  class Spyer(underlying: Consumer) extends Spying(underlying) {
+    def spy(message: Envelope): Unit = {
       log.info("Spied" + message.details)
     }
   }
 
   def greetService(label: String): SimpleService =
-    new SimpleService(List(new GreetConsumer(label) with Spyer))
+    new SimpleService(List(new Spyer(greetConsumer(label))))
 
   def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable): Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
@@ -53,12 +55,14 @@ object KafkaCheck {
     )
     consumer.start()
 
+    val firstMessageType = new CheckMessage("first")
+    val secondMessageType = new CheckMessage("second")
 
     for {
       i <- 0 until 3
     } yield {
-      producer.send(Message("first", JNull))
-      producer.send(Message("second", JNull))
+      producer.send(firstMessageType.Message)
+      producer.send(secondMessageType.Message)
       Thread.sleep(10)
     }
 

@@ -2,12 +2,13 @@ package com.socrata.eurybates
 
 import java.util.Properties
 
-import com.socrata.eurybates
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
 import org.slf4j.LoggerFactory
+
+import com.socrata.eurybates.message.{Envelope, Message}
 
 /** A Producer accepts messages from user code and routes them to a topic.
   *
@@ -48,15 +49,19 @@ trait Producer {
 
   def supportedProducerTypes() : Seq[ProducerType]
 
-  def send(message: eurybates.Message): Unit
+  def send(message: Envelope): Unit
 
-  def send(message: eurybates.Message, producerType: ProducerType) : Unit = {
+  def send(message: Envelope, producerType: ProducerType) : Unit = {
     if(supportedProducerTypes().contains(producerType)){
       throw new IllegalArgumentException("Trying to send unsupported producer type for this producer")
     }
 
     send(message)
   }
+
+  final def send[T : Message](message: T): Unit = send(Envelope(message))
+
+  final def send[T : Message](message: T, producerType: ProducerType): Unit = send(Envelope(message), producerType)
 
   def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
     // Default is noop

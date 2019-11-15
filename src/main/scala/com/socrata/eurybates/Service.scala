@@ -4,8 +4,10 @@ package eurybates
 import util.logging.LazyStringLogger
 import SimpleService.log
 
+import com.socrata.eurybates.message.Envelope
+
 trait Service {
-  def messageReceived(message: Message): Unit
+  def messageReceived(message: Envelope): Unit
 }
 
 class SimpleService(consumers: Traversable[Consumer]) extends Service {
@@ -17,7 +19,7 @@ class SimpleService(consumers: Traversable[Consumer]) extends Service {
       }
     }
 
-  def messageReceived(message: Message): Unit = {
+  def messageReceived(message: Envelope): Unit = {
     log.debug("Received " + message.tag)
     routing(message.tag).foreach(consumer => {
       log.info(s"Consuming ${message.tag} using ${consumer.name}")

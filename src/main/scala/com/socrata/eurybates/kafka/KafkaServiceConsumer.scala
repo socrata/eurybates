@@ -9,13 +9,14 @@ import java.util.Properties
 import com.socrata.eurybates.Producer.ProducerType
 import util.logging.LazyStringLogger
 import org.apache.kafka.clients.consumer.{Consumer, ConsumerConfig, ConsumerRecord, KafkaConsumer}
-import eurybates.{Message, MessageCodec, Service, ServiceName}
+import eurybates.{EnvelopeCodec, Service, ServiceName}
 import com.rojoma.json.v3.io.JsonReaderException
 import com.rojoma.json.v3.util.JsonUtil
 import com.rojoma.json.v3.codec.DecodeError.InvalidValue
 import com.rojoma.json.v3.ast.JString
 import com.rojoma.json.v3.codec.Path
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates.message.Envelope
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -33,7 +34,7 @@ class KafkaServiceConsumer(brokerList: String,
                            executor: ExecutorService,
                            handlingLogger: (ServiceName, String, Throwable) => Unit,
                            services: Map[ServiceName, Service]
-                          ) extends MessageCodec(sourceId) {
+                          ) extends EnvelopeCodec(sourceId) {
 
   val log = new LazyStringLogger(getClass)
 
@@ -82,7 +83,7 @@ class KafkaServiceConsumer(brokerList: String,
           val message = new String(record.value(), StandardCharsets.UTF_8)
 
           val msg = try {
-            JsonUtil.parseJson[Message](message)
+            JsonUtil.parseJson[Envelope](message)
           } catch {
             case _: JsonReaderException =>
               Left(InvalidValue(JString(message), Path("details")))

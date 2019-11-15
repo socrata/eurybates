@@ -11,6 +11,8 @@ import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.util.logging.LazyStringLogger
 import org.apache.activemq.ActiveMQConnectionFactory
 
+import com.socrata.eurybates.message.Envelope
+
 // technically, a Session is supposed to be used by only a single thread.  Fortunately, activemq
 // is more lenient than strict JMS.
 
@@ -39,7 +41,7 @@ case class ActiveMQServiceProducer(connection: Connection,
                                    sourceId: String,
                                    encodePrettily: Boolean = true,
                                    closeConnection: Boolean = false
-                                  ) extends MessageCodec(sourceId) with Producer {
+                                  ) extends EnvelopeCodec(sourceId) with Producer {
 
   private val log = new LazyStringLogger(getClass)
 
@@ -95,7 +97,7 @@ case class ActiveMQServiceProducer(connection: Connection,
     }
   }
 
-  def send(message: Message): Unit = {
+  override def send(message: Envelope): Unit = {
     session match {
       case Some(someSession) =>
         log.trace("Sending " + message)

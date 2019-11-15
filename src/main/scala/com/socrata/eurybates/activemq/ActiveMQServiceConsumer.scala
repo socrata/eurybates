@@ -16,6 +16,8 @@ import com.rojoma.json.v3.codec.Path
 
 import scala.annotation.tailrec
 
+import com.socrata.eurybates.message.Envelope
+
 trait Transacted {
   this: ActiveMQServiceConsumer =>
   override def sessionMode: SessionMode.SessionMode = SessionMode.Transacted
@@ -25,7 +27,7 @@ case class AMQRollbackMessageException(msg: String) extends Exception(msg)
 
 class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor: ExecutorService,
                               handlingLogger: (ServiceName, String, Throwable) => Unit,
-                              services: Map[ServiceName, Service]) extends MessageCodec(sourceId) with QueueUtil {
+                              services: Map[ServiceName, Service]) extends EnvelopeCodec(sourceId) with QueueUtil {
   val log = new LazyStringLogger(getClass)
 
 
@@ -138,7 +140,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
         qMsg match {
           case tm: TextMessage =>
             val msg = try {
-              JsonUtil.parseJson[Message](tm.getText)
+              JsonUtil.parseJson[Envelope](tm.getText)
             } catch {
               case _: JsonReaderException =>
                 Left(InvalidValue(JString(tm.getText), Path("details")))
