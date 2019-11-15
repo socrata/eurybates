@@ -10,8 +10,8 @@ trait Message[T] {
 }
 
 class JCodecMessage[T : JsonEncode : JsonDecode](val tag: String) extends Message[T] {
-  def encode(msg: T) = JsonEncode.toJValue(msg)
-  def decode(value: JValue) = JsonDecode.fromJValue(value)
+  def encode(msg: T): JValue = JsonEncode.toJValue(msg)
+  def decode(value: JValue): Either[DecodeError, T] = JsonDecode.fromJValue(value)
 }
 
 object Message {

@@ -20,7 +20,7 @@ object Consumer {
     def this(name: String) = this(Map.empty, name)
     def this() = this("Consumer.Builder.Consumer")
 
-    def consuming[T : Message](onMessage: T => Unit) = {
+    def consuming[T : Message](onMessage: T => Unit): Builder = {
       val consumer = new ConsumerPair {
         type MessageType = T
         val message = implicitly[Message[MessageType]]
@@ -50,7 +50,7 @@ object Consumer {
   }
 
   object Builder extends Builder {
-    def apply(name: String) = new Builder(name)
+    def apply(name: String): Builder = new Builder(name)
 
     // use this like either:
     //
