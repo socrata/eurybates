@@ -2,7 +2,6 @@ package com.socrata.eurybates.check
 
 import com.socrata.zookeeper.ZooKeeperProvider
 import com.socrata.eurybates.zookeeper.ServiceConfiguration
-import com.rojoma.json.v3.ast.JNull
 import com.socrata.util.logging.LazyStringLogger
 import com.socrata.eurybates._
 import com.socrata.eurybates.kafka.KafkaServiceConsumer
@@ -17,30 +16,25 @@ import kafka.KafkaServiceProducer
 object MultiPlexCheck {
   val log = new LazyStringLogger(getClass)
 
-  def greetConsumerKafka(label: String): Consumer = new Consumer {
-    val accepts = Set("first", "second")
+  object First extends CheckMessage("first")
+  object Second extends CheckMessage("second")
 
-    def consume(message: Message): Unit = {
-      log.info("Kafka" + label + " received " + message)
-    }
-  }
-
-  def greetServiceKafka(label: String): SimpleService =
-    new SimpleService(List(greetConsumerKafka(label)))
+  def greetConsumerKafka(label: String): Consumer =
+    Consumer.Builder.
+      consuming[First.Message.type] { _ => log.info("Kafka " + label + " received first!") }.
+      consuming[Second.Message.type] { _ => log.info("Kafka " + label + " received second!") }.
+      build()
 
   def onUnexpectedException(sn: ServiceName, msgText: String, ex: Throwable): Unit = {
     log.error(sn + " received unknown message " + msgText, ex)
   }
 
-  def greetConsumerAMQP(label: String): Consumer = new Consumer {
-    val accepts = Set("hello","first","second")
-    def consume(message: Message): Unit = {
-      log.info("AMQP" + label + " received " + message)
-    }
-  }
-
-  def greetService(label: String): SimpleService =
-    new SimpleService(List(greetConsumerAMQP(label),greetConsumerKafka(label)))
+  def greetConsumerAMQP(label: String): Consumer =
+    Consumer.Builder.
+      consuming[First.Message.type] { _ => log.info("AMQP " + label + " received first!") }.
+      consuming[Second.Message.type] { _ => log.info("AMQP " + label + " received second!") }.
+      consuming[CheckMessage.Hello.Message.type] { _ => log.info("AMQP " + label + " received hello!") }.
+      build()
 
   def main(args: Array[String]): Unit = {
     val executor = java.util.concurrent.Executors.newCachedThreadPool()
@@ -71,16 +65,16 @@ object MultiPlexCheck {
     log.info("Starting consumers")
     val consumer = new KafkaServiceConsumer("localhost:2181", "hello!", executor, onUnexpectedException,
       Map(
-        "second" -> greetService("b")))
+        "second" -> greetConsumerKafka("b")))
     consumer.start()
 
     val consumerampq = new ActiveMQServiceConsumer(conn, "hello!", executor, onUnexpectedException,
-                           Map("first" -> greetService("a"), "second" -> greetService("b")))
+                           Map("first" -> greetConsumerAMQP("a"), "second" -> greetConsumerAMQP("b")))
     consumerampq.start()
 
     (0 until 100).foreach(_ => {
-      multiplexer.send(Message("first", JNull))
-      multiplexer.send(Message("second", JNull))
+      multiplexer.send(First.Message)
+      multiplexer.send(Second.Message)
       Thread.sleep(100)
     })
 

@@ -7,6 +7,7 @@ import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates._
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
+import com.socrata.eurybates.message.Envelope
 
 import scala.annotation.tailrec
 
@@ -29,9 +30,9 @@ object MultiServiceProducer {
 }
 
 case class MultiServiceProducer(sourceId: String, producers: List[Producer])
-  extends MessageCodec(sourceId) with Producer {
+  extends EnvelopeCodec(sourceId) with Producer {
 
-  override def send(message: Message): Unit = producers.foreach(_.send(message))
+  override def send(message: Envelope): Unit = producers.foreach(_.send(message))
 
   override def start(): Unit = synchronized {
     producers.foreach((producer) => producer.start())
@@ -48,11 +49,11 @@ case class MultiServiceProducer(sourceId: String, producers: List[Producer])
   override def supportedProducerTypes(): Seq[ProducerType] =
     producers.flatMap(_.supportedProducerTypes())
 
-  override def send(message: Message, producerType: ProducerType): Unit = {
+  override def send(message: Envelope, producerType: ProducerType): Unit = {
     sendHelper(message, producerType, producers)
   }
 
-  @tailrec private def sendHelper(message: Message,
+  @tailrec private def sendHelper(message: Envelope,
                                   producerType: ProducerType,
                                   producers: List[Producer]): Unit = {
     producers match {

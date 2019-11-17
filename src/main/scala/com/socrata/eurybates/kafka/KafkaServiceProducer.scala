@@ -28,7 +28,7 @@ object KafkaServiceProducer {
 case class KafkaServiceProducer(brokerList: String,
                                 sourceId: String,
                                 encodePrettily: Boolean = true
-                               ) extends MessageCodec(sourceId) with Producer with QueueUtil {
+                               ) extends EnvelopeCodec(sourceId) with Producer with QueueUtil {
   val log = new LazyStringLogger(getClass)
   var producer: Option[KafkaProducer[String, String]] = None
 
@@ -46,7 +46,7 @@ case class KafkaServiceProducer(brokerList: String,
     producer.foreach(_.close())
   }
 
-  def send(message: eurybates.Message): Unit = {
+  def send(message: eurybates.message.Envelope): Unit = {
     producer match {
       case Some(someProducer) =>
         val queueName = Name

@@ -3,6 +3,7 @@ package eurybates
 
 import com.socrata.eurybates.Producer.ProducerType
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
+import com.socrata.eurybates.message.Envelope
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Callable
@@ -10,13 +11,12 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ExecutionException
 
 class LocalServiceWrangler(executor: ExecutorService,
-                           handlingLogger: (ServiceName, Message, Throwable) => Unit,
-                           services: Map[ServiceName, Service]) extends Producer {
+                           handlingLogger: (ServiceName, Envelope, Throwable) => Unit,
+                           services: Map[ServiceName, Consumer]) extends Producer {
   private val workers = services map { case (serviceName, service) => new ServiceProcess(serviceName, service) }
 
-  def send(msg: Message): Unit = {
-    val forcedDetails = msg.details.forced
-    val forcedMsg = msg.copy(details = forcedDetails)
+  def send(msg: Envelope): Unit = {
+    val forcedMsg = msg.forced
 
     // TODO: if activemq composite destinations does not put messages
     // on the composite queue atomically, this does not need to be
@@ -43,8 +43,8 @@ class LocalServiceWrangler(executor: ExecutorService,
     workers.foreach(_.join())
   }
 
-  private class ServiceProcess(serviceName: ServiceName, service: Service) extends Thread {
-    val queue = new LinkedBlockingQueue[Message]
+  private class ServiceProcess(serviceName: ServiceName, service: Consumer) extends Thread {
+    val queue = new LinkedBlockingQueue[Envelope]
 
     setName(getId() + " / Eurybates service " + serviceName)
 
@@ -59,7 +59,7 @@ class LocalServiceWrangler(executor: ExecutorService,
           // guarantee that this loop will terminate.
 
           val result = executor.submit(new Callable[Unit] {
-            def call(): Unit = { service.messageReceived(msg) }
+            def call(): Unit = { service.consume(msg) }
           })
           try {
             result.get()
