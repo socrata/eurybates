@@ -3,8 +3,9 @@ package eurybates
 package activemq
 
 import java.util.Properties
-import javax.jms.{Connection, DeliveryMode, JMSException, MessageProducer, Queue, Session}
 
+import com.rojoma.json.v3.ast.JValue
+import javax.jms.{Connection, DeliveryMode, Destination, JMSException, MessageProducer, Queue, Session}
 import com.rojoma.json.v3.util.JsonUtil
 import com.socrata.eurybates.Producer.ProducerType
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
@@ -102,6 +103,23 @@ case class ActiveMQServiceProducer(connection: Connection,
         val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
         val qMessage = someSession.createTextMessage(encodedMessage)
         queue.foreach(target => producer.foreach(_.send(target, qMessage)))
+      case None => throw new IllegalStateException("Session has not been started")
+    }
+  }
+
+  /**
+    * This method does not create Eurybates message.
+    * It allows flexibility in messaging both Eurybates and non-Eurybates with the same utility.
+    * @param message
+    * @param destination
+    */
+  override def sendRaw(message: JValue, destination: Option[Destination]): Unit = {
+    session match {
+      case Some(someSession) =>
+        log.trace("Sending " + message)
+        val encodedMessage = JsonUtil.renderJson(message, pretty = encodePrettily)
+        val qMessage = someSession.createTextMessage(encodedMessage)
+        destination.orElse(queue).foreach(target => producer.foreach(_.send(target, qMessage)))
       case None => throw new IllegalStateException("Session has not been started")
     }
   }
