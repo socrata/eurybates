@@ -2,11 +2,13 @@ package com.socrata.eurybates
 
 import java.util.Properties
 
+import com.rojoma.json.v3.ast.JValue
 import com.socrata.eurybates
 import com.socrata.eurybates.Producer.ProducerType.ProducerType
 import com.socrata.eurybates.activemq.ActiveMQServiceProducer
 import com.socrata.eurybates.kafka.KafkaServiceProducer
 import com.socrata.eurybates.multiservice.MultiServiceProducer
+import javax.jms.Destination
 import org.slf4j.LoggerFactory
 
 /** A Producer accepts messages from user code and routes them to a topic.
@@ -56,6 +58,16 @@ trait Producer {
     }
 
     send(message)
+  }
+
+  /**
+    * This method does not create Eurybates message.
+    * It allows flexibility in messaging both Eurybates and non-Eurybates with the same utility.
+    * @param message
+    * @param destination
+    */
+  def sendRaw(message: JValue, destination: Option[Destination]): Unit = {
+    log.debug("Not implemented")
   }
 
   def setServiceNames(serviceNames: Traversable[ServiceName]) : Unit = {
