@@ -1,42 +1,18 @@
-import Dependencies._
-import sbt.Keys._
+organization := "com.socrata"
 
-/**
-  * Setting common to all projects.
-  *
-  * NOTE: This must be added to all Subprojects!
-  */
-lazy val commonSettings = Seq(
-  organization := "com.socrata",
-  scalaVersion := "2.11.8",
-  crossScalaVersions := Seq("2.10.6", scalaVersion.value),
-  scalastyleFailOnError in Compile := true,
-  assemblyMergeStrategy in assembly := {
-    case "META-INF/spring.tooling" | "overview.html" => MergeStrategy.last
-    case x =>
-      val oldStrategy = (assemblyMergeStrategy in assembly).value
-      oldStrategy(x)
-  },
-  resolvers += "socrata" at "https://repo.socrata.com/artifactory/libs-release"
+name := "eurybates"
+
+scalaVersion := "2.12.8"
+
+crossScalaVersions := Seq("2.10.6", "2.11.8", scalaVersion.value)
+
+resolvers += "socrata" at "https://repo.socrata.com/artifactory/libs-release"
+
+libraryDependencies ++= Seq(
+  "com.rojoma" %% "rojoma-json-v3" % "3.10.0",
+  "com.socrata" %% "socrata-zookeeper" % "1.1.0",
+  "org.apache.activemq" % "activemq-core" % "5.7.0" % "optional",
+  "org.apache.kafka" % "kafka-clients" % "0.8.2.1" % "optional",
+  "org.slf4j" % "slf4j-api" % "1.7.21",
+  "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
-
-lazy val eurybates = (project in file(".")).
-  settings(commonSettings: _*).
-  settings(
-    name := "eurybates",
-    libraryDependencies ++= Seq(
-      activemq,
-      kafka_clients,
-      rojoma_json,
-      socrata_zookeeper,
-      scala_test,
-      slf4j
-    )
-  )
-
-
-// TODO: enable static analysis build failures
-// TODO: Unable to incorporate in common settings....????
-com.socrata.sbtplugins.findbugs.JavaFindBugsPlugin.JavaFindBugsKeys.findbugsFailOnError in Compile := false
-com.socrata.sbtplugins.findbugs.JavaFindBugsPlugin.JavaFindBugsKeys.findbugsFailOnError in Test := false
-
