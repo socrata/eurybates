@@ -56,7 +56,7 @@ object Check {
     for {
       i <- 0 until 100
     } yield {
-      producer.send(Message("hello", JNull))
+      producer.send(Message("hello", JNull, JNull))
       if (i == 30) {
         config.registerService("first")
       } else if (i == 60) {

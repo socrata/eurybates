@@ -9,7 +9,7 @@ class MessageCodec(sourceId:String) {
   private val detailsVar = Variable[JValue]
   private val sourceIdVar = Variable[String]
   private val uuidVar = Variable[String]
-  private val activitiesVar = Variable[JArray]
+  private val activitiesVar = Variable[JValue]
   private val WireMessagePat = PObject(
     "tag" -> tagVar,
     "details" -> detailsVar,
@@ -25,7 +25,7 @@ class MessageCodec(sourceId:String) {
         detailsVar := msg.details,
         sourceIdVar := sourceId,
         uuidVar := java.util.UUID.randomUUID().toString,
-        activities := msg.activities)
+        activitiesVar := msg.activities)
 
     def decode(x: JValue): Either[DecodeError, Message] =
       WireMessagePat.matches(x).right.map { results =>
