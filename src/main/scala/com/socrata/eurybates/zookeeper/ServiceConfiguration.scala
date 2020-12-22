@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 // TODO: Remove ZooKeeper dependency
 class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnChanges: Set[ServiceName] => Unit) {
   private val log = LoggerFactory.getLogger(classOf[ServiceConfiguration])
+  private val lock = new QuasiBlockingLock
 
   final def start(): Traversable[ServiceName] = synchronized {
     log.info("Starting zookeeper ServiceConfiguration")
@@ -111,7 +112,8 @@ class ServiceConfiguration(zkp: ZooKeeperProvider, executor: Executor, notifyOnC
 
   private def updateServiceConfiguration(): Unit = {
     log.info("Updating config.")
-    synchronized {
+
+    lock.tryWithLock() {
       val zk = zkp.get()
 
       zk.children(root, watcher) match {
