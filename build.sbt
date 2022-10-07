@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   "com.socrata" %% "socrata-zookeeper" % "1.1.0",
   "org.apache.activemq" % "activemq-core" % "5.7.0" % "optional",
   "org.apache.kafka" % "kafka-clients" % "0.8.2.1" % "optional",
-  "org.slf4j" % "slf4j-api" % "1.7.21",
+  "org.slf4j" % "slf4j-api" % "1.7.36",
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
 
