@@ -18,3 +18,11 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.21",
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
+
+publishTo := {
+  val nexus = "https://repo.socrata.com/artifactory/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "libs-snapshot-local")
+  else
+    Some("releases" at nexus + "libs-release-local")
+}
