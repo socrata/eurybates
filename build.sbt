@@ -4,7 +4,7 @@ name := "eurybates"
 
 scalaVersion := "2.12.8"
 
-crossScalaVersions := Seq("2.10.6", "2.11.8", scalaVersion.value)
+crossScalaVersions := Seq(scalaVersion.value)
 
 resolvers += "socrata" at "https://repo.socrata.com/artifactory/libs-release"
 
