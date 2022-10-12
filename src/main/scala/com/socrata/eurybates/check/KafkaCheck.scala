@@ -57,8 +57,8 @@ object KafkaCheck {
     for {
       i <- 0 until 3
     } yield {
-      producer.send(Message("first", JNull))
-      producer.send(Message("second", JNull))
+      producer.send(Message("first", JNull, JNull))
+      producer.send(Message("second", JNull, JNull))
       Thread.sleep(10)
     }
 
