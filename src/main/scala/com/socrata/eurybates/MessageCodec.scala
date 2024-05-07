@@ -9,13 +9,11 @@ class MessageCodec(sourceId:String) {
   private val detailsVar = Variable[JValue]
   private val sourceIdVar = Variable[String]
   private val uuidVar = Variable[String]
-  private val activitiesVar = Variable[JValue]
   private val WireMessagePat = PObject(
     "tag" -> tagVar,
     "details" -> detailsVar,
     "source_id" -> sourceIdVar,
-    "uuid" -> uuidVar,
-    "activities" -> activitiesVar
+    "uuid" -> uuidVar
   )
 
   implicit object jCodec extends JsonEncode[Message] with JsonDecode[Message] {
@@ -24,12 +22,11 @@ class MessageCodec(sourceId:String) {
         tagVar := msg.tag,
         detailsVar := msg.details,
         sourceIdVar := sourceId,
-        uuidVar := java.util.UUID.randomUUID().toString,
-        activitiesVar := msg.activities)
+        uuidVar := java.util.UUID.randomUUID().toString)
 
     def decode(x: JValue): Either[DecodeError, Message] =
       WireMessagePat.matches(x).right.map { results =>
-        Message(tagVar(results), detailsVar(results), activitiesVar(results))
+        Message(tagVar(results), detailsVar(results))
       }
 
   }

@@ -1,1 +1,1 @@
-ThisBuild / version := "2.1.2"
+ThisBuild / version := "2.1.1-jdk17"

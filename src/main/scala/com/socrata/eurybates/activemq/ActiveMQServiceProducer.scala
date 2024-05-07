@@ -24,7 +24,7 @@ object ActiveMQServiceProducer {
 
   def openActiveMQConnection(amqUrl: String): Connection = {
     try {
-      val connFactory: ActiveMQConnectionFactory = new ActiveMQConnectionFactory(amqUrl)
+      val connFactory = new ActiveMQConnectionFactory(amqUrl)
       val amqConnection = connFactory.createConnection
       amqConnection.start()
       amqConnection
