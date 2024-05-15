@@ -5,7 +5,7 @@ package activemq
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
-import javax.jms.{Connection, JMSException, Session, TextMessage}
+import jakarta.jms.{Connection, JMSException, Session, TextMessage}
 
 import util.logging.LazyStringLogger
 import com.rojoma.json.v3.io.JsonReaderException
@@ -78,13 +78,13 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
       }
     }
 
-    @tailrec private def nextMessage(sleepTime: Long = InitialSleepTime): javax.jms.Message = {
+    @tailrec private def nextMessage(sleepTime: Long = InitialSleepTime): jakarta.jms.Message = {
       val sleepMax = SleepTimeMaximum
 
       try {
         consumer.receive()
       } catch {
-        case _: javax.jms.IllegalStateException =>  // this generally means the consumer is shutting down
+        case _: jakarta.jms.IllegalStateException =>  // this generally means the consumer is shutting down
           null // scalastyle:ignore null
         case e: JMSException => // hmmmmm
           log.error("Unexpected JMS exception; sleeping and retrying", e)
@@ -133,7 +133,7 @@ class ActiveMQServiceConsumer(connection: Connection, sourceId: String, executor
       }
     }
 
-    case class MessageHandler(qMsg: javax.jms.Message) extends Callable[Unit] {
+    case class MessageHandler(qMsg: jakarta.jms.Message) extends Callable[Unit] {
       def call(): Unit = {
         qMsg match {
           case tm: TextMessage =>

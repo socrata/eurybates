@@ -3,7 +3,7 @@ package eurybates
 package activemq
 
 import java.util.Properties
-import javax.jms.{Connection, DeliveryMode, JMSException, MessageProducer, Queue, Session}
+import jakarta.jms.{Connection, DeliveryMode, JMSException, MessageProducer, Queue, Session}
 
 import com.rojoma.json.v3.util.JsonUtil
 import com.socrata.eurybates.Producer.ProducerType
@@ -24,7 +24,7 @@ object ActiveMQServiceProducer {
 
   def openActiveMQConnection(amqUrl: String): Connection = {
     try {
-      val connFactory: ActiveMQConnectionFactory = new ActiveMQConnectionFactory(amqUrl)
+      val connFactory = new ActiveMQConnectionFactory(amqUrl)
       val amqConnection = connFactory.createConnection
       amqConnection.start()
       amqConnection
