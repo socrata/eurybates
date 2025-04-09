@@ -1,0 +1,7 @@
+site_name: 'eurybates'
+docs_dir: '.'
+nav:
+  - Home: README.md
+plugins:
+  - techdocs-core
+  - same-dir
