@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: eurybates
+  description: |
+    Eurybates is a library for producing to and consuming from queues. This
+    library offers functionality for both ActiveMQ and Kafka.
+  links:
+  - title: OpsDoc
+    url: "https://socrata.atlassian.net/wiki/spaces/ONCALL/pages/2158526660/OpsDoc+-+ActiveMQ"
+  - title: Teams Channel
+    url: "https://teams.microsoft.com/l/channel/19%3Ae028af624a334d2199fcc8619a60abd2%40thread.tacv2/eventing-q-and-a?groupId=102da3ef-c928-4a59-afe5-f0d51e6443dd"
+  annotations:
+    github.com/project-slug: socrata/eurybates
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - scala
+spec:
+  type: library
+  owner: eventing
+  lifecycle: production
